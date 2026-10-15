@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Figtree:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Archivo', system-ui, sans-serif;
+  --font-sans: 'Figtree', system-ui, sans-serif;
+
+  --color-ink: #14161a;
+  --color-ink-2: #5b616b;
+  --color-paper: #faf8f4;
+  --color-line: #e6e2da;
+  --color-sand: #f1e9db;
+
+  --color-move: #ff6a3d;
+  --color-move-tint: #ffe4da;
+  --color-eat: #ffc93c;
+  --color-eat-tint: #fff2cc;
+  --color-recover: #3db7a5;
+  --color-recover-tint: #d9f2ee;
+
+  --color-ok: #2e9e5b;
+  --color-warn: #e39b00;
+  --color-warn-tint: #fff4dc;
+  --color-bad: #d64545;
+  --color-bad-tint: #fde8e8;
+  --color-ok-tint: #e3f4ea;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 88px;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+    border-radius: 8px;
+  }
+  ::selection {
+    background: var(--color-eat);
+    color: var(--color-ink);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  *:hover {
+    scrollbar-color: var(--color-line) transparent;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+@layer components {
+  .h-display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-stretch: 108%;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+  }
+  .num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .label {
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+}

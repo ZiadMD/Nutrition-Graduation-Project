@@ -1,0 +1,150 @@
+[
+  {
+    "email": "karim@demo.com",
+    "name": "Coach Karim Adel",
+    "type": "trainer",
+    "credentials": "Certified strength coach (NASM-CPT)",
+    "bio": "I coach strength for people who want to train for years, not weeks. Most of my clients are coming back from a break or an injury, so we start light and add load only when your body shows it is ready.",
+    "focusTags": "Strength,Fat loss,Returning to training",
+    "photoUrl": "https://images.unsplash.com/photo-1758875568823-34bdf47b82dc?auto=format&fit=crop&w=900&q=85",
+    "city": "Cairo",
+    "yearsExperience": 9,
+    "languages": "Arabic,English",
+    "rateEgp": 350,
+    "sessionsCompleted": 1840,
+    "approvalStatus": "approved",
+    "credentialDoc": "karim_nasm_cert.pdf",
+    "packages": [
+      { "name": "Single session", "description": "One 30-minute session. Good for a first chat or a one-off question.", "sessionsCount": 1, "priceEgp": 350 },
+      { "name": "Monthly check-ins", "description": "Four sessions over a month, 10% off. Plan updates between calls.", "sessionsCount": 4, "priceEgp": 1260 },
+      { "name": "8-week block", "description": "Eight sessions, 15% off. Best for a full fat-loss or strength phase.", "sessionsCount": 8, "priceEgp": 2380 }
+    ]
+  },
+  {
+    "email": "hana@demo.com",
+    "name": "Hana Ibrahim, RD",
+    "type": "nutritionist",
+    "credentials": "Registered dietitian, Cairo University",
+    "bio": "I build meal plans from the food you already like: ful, koshari, grilled chicken, lentil soup. No banned foods, just portions and protein that match your training.",
+    "focusTags": "Fat loss,Protein for recovery,Eating on a budget",
+    "photoUrl": "https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?auto=format&fit=crop&w=900&q=85",
+    "city": "Cairo",
+    "yearsExperience": 7,
+    "languages": "Arabic,English",
+    "rateEgp": 300,
+    "sessionsCompleted": 1260,
+    "approvalStatus": "approved",
+    "credentialDoc": "hana_rd_licence.pdf",
+    "packages": [
+      { "name": "Single session", "description": "One 30-minute session. Good for a first chat or a one-off question.", "sessionsCount": 1, "priceEgp": 300 },
+      { "name": "Monthly check-ins", "description": "Four sessions over a month, 10% off. Plan updates between calls.", "sessionsCount": 4, "priceEgp": 1080 },
+      { "name": "8-week block", "description": "Eight sessions, 15% off. Best for a full nutrition phase.", "sessionsCount": 8, "priceEgp": 2040 }
+    ]
+  },
+  {
+    "email": "mona@demo.com",
+    "name": "Dr. Mona Fathy, PT",
+    "type": "physical_therapist",
+    "credentials": "Licensed physical therapist, knee and return-to-sport rehab",
+    "bio": "I help people get back to lifting and running after knee, hip, and back injuries. We use clear pain rules so you always know what is safe to do today.",
+    "focusTags": "Knee rehab,Hip and back,Return to sport",
+    "photoUrl": "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=900&q=85",
+    "city": "Cairo",
+    "yearsExperience": 11,
+    "languages": "Arabic,English,French",
+    "rateEgp": 450,
+    "sessionsCompleted": 2310,
+    "approvalStatus": "approved",
+    "credentialDoc": "mona_pt_licence.pdf",
+    "packages": [
+      { "name": "Single session", "description": "One 30-minute session. Good for a first assessment or a one-off question.", "sessionsCount": 1, "priceEgp": 450 },
+      { "name": "Monthly check-ins", "description": "Four sessions over a month, 10% off. Progress reviews between calls.", "sessionsCount": 4, "priceEgp": 1620 },
+      { "name": "8-week block", "description": "Eight sessions, 15% off. Best for a full rehab phase.", "sessionsCount": 8, "priceEgp": 3060 }
+    ]
+  },
+  {
+    "email": "nour@demo.com",
+    "name": "Coach Nour Salem",
+    "type": "trainer",
+    "credentials": "Certified trainer, returning-to-training plans",
+    "bio": "I write simple home and gym plans for busy people. Three focused sessions a week, tracked in the app, with check-ins when you miss one.",
+    "focusTags": "Home workouts,Beginners,Busy schedules",
+    "photoUrl": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=900&q=85",
+    "city": "Giza",
+    "yearsExperience": 5,
+    "languages": "Arabic,English",
+    "rateEgp": 280,
+    "sessionsCompleted": 740,
+    "approvalStatus": "approved",
+    "credentialDoc": "nour_cert.pdf",
+    "packages": [
+      { "name": "Single session", "description": "One 30-minute session.", "sessionsCount": 1, "priceEgp": 280 },
+      { "name": "Monthly check-ins", "description": "Four sessions over a month, 10% off.", "sessionsCount": 4, "priceEgp": 1008 },
+      { "name": "8-week block", "description": "Eight sessions, 15% off.", "sessionsCount": 8, "priceEgp": 1904 }
+    ]
+  },
+  {
+    "email": "nada@demo.com",
+    "name": "Nada Gamal, RD",
+    "type": "nutritionist",
+    "credentials": "Registered dietitian, sports nutrition",
+    "bio": "I help students and young professionals eat well on a budget, including Ramadan plans and meals for shared kitchens.",
+    "focusTags": "Student budgets,Muscle gain,Ramadan plans",
+    "photoUrl": "https://images.unsplash.com/photo-1627161683077-e34782c24d81?auto=format&fit=crop&w=900&q=85",
+    "city": "Alexandria",
+    "yearsExperience": 4,
+    "languages": "Arabic,English",
+    "rateEgp": 260,
+    "sessionsCompleted": 510,
+    "approvalStatus": "approved",
+    "credentialDoc": "nada_rd_licence.pdf",
+    "packages": [
+      { "name": "Single session", "description": "One 30-minute session.", "sessionsCount": 1, "priceEgp": 260 },
+      { "name": "Monthly check-ins", "description": "Four sessions over a month, 10% off.", "sessionsCount": 4, "priceEgp": 936 },
+      { "name": "8-week block", "description": "Eight sessions, 15% off.", "sessionsCount": 8, "priceEgp": 1768 }
+    ]
+  },
+  {
+    "email": "youssef@demo.com",
+    "name": "Dr. Youssef Amin, PT",
+    "type": "physical_therapist",
+    "credentials": "Licensed physical therapist, shoulder and lower back",
+    "bio": "I treat desk-related back and shoulder pain and help lifters get back under the bar. Expect short, specific routines you can do in ten minutes.",
+    "focusTags": "Lower back,Shoulder,Desk posture",
+    "photoUrl": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=900&q=85",
+    "city": "Cairo",
+    "yearsExperience": 8,
+    "languages": "Arabic,English",
+    "rateEgp": 400,
+    "sessionsCompleted": 1520,
+    "approvalStatus": "approved",
+    "credentialDoc": "youssef_pt_licence.pdf",
+    "packages": [
+      { "name": "Single session", "description": "One 30-minute session.", "sessionsCount": 1, "priceEgp": 400 },
+      { "name": "Monthly check-ins", "description": "Four sessions over a month, 10% off.", "sessionsCount": 4, "priceEgp": 1440 },
+      { "name": "8-week block", "description": "Eight sessions, 15% off.", "sessionsCount": 8, "priceEgp": 2720 }
+    ]
+  },
+  {
+    "email": "yasmin@demo.com",
+    "name": "Dr. Yasmin Farouk, PT",
+    "type": "physical_therapist",
+    "credentials": "Licensed physical therapist, MSc Sports Rehabilitation",
+    "bio": "I specialise in post-surgical rehab and sports injuries. My sessions are structured, measurable, and always explained clearly so you know why every exercise is in your plan.",
+    "focusTags": "Post-surgical rehab,Sports injuries,Strength return",
+    "photoUrl": "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=900&q=85",
+    "city": "Cairo",
+    "yearsExperience": 8,
+    "languages": "Arabic,English",
+    "rateEgp": 420,
+    "sessionsCompleted": 0,
+    "approvalStatus": "pending",
+    "credentialDoc": "yasmin_pt_licence.pdf",
+    "packages": [
+      { "name": "Single session", "description": "One 30-minute session.", "sessionsCount": 1, "priceEgp": 420 },
+      { "name": "Monthly check-ins", "description": "Four sessions over a month, 10% off.", "sessionsCount": 4, "priceEgp": 1512 },
+      { "name": "8-week block", "description": "Eight sessions, 15% off.", "sessionsCount": 8, "priceEgp": 2856 }
+    ]
+  }
+]
+

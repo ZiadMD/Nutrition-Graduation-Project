@@ -1,0 +1,441 @@
+# api.http — VS Code REST Client samples.
+# Install the "REST Client" extension by Huachao Mao, then click "Send Request"
+# above any ### block to fire it directly from the editor.
+
+@baseUrl = http://localhost:4000
+
+# ==============================================================================
+# Phase 1: Server Scaffold & Health
+# ==============================================================================
+
+### Health check — should return { "data": { "status": "ok" } }
+GET {{baseUrl}}/api/health
+
+### 404 check — should return { "error": { "code": "NOT_FOUND", ... } }
+GET {{baseUrl}}/api/does-not-exist
+
+# ==============================================================================
+# Phase 2: Auth Endpoints
+# ==============================================================================
+
+### 1. Login as Sara (Client)
+# @name loginSara
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "sara@demo.com",
+  "password": "demo1234"
+}
+
+### 2. Login with wrong password — should return 401 INVALID_CREDENTIALS
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "sara@demo.com",
+  "password": "wrongpassword"
+}
+
+### 3. Login as Mona (Specialist - Physical Therapist)
+# @name loginMona
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "mona@demo.com",
+  "password": "demo1234"
+}
+
+### 4. GET /api/auth/me for Sara (Client) — shows onboardingCompleted: true
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 5. GET /api/auth/me for Mona (Specialist) — shows approvalStatus: "approved"
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{loginMona.response.body.data.token}}
+
+### 6. Register a new client
+# @name registerClient
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Tarek Nour",
+  "email": "tarek.test@example.com",
+  "password": "password1234",
+  "role": "client"
+}
+
+### 7. Register a new specialist (starts as pending)
+# @name registerSpecialist
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Dr. Layla Zaki",
+  "email": "layla.test@example.com",
+  "password": "password1234",
+  "role": "specialist",
+  "type": "nutritionist",
+  "credentials": "MSc Clinical Nutrition, Cairo University",
+  "city": "Alexandria",
+  "rateEgp": 550
+}
+
+### 8. Register duplicate email — should return 409 EMAIL_IN_USE
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Duplicate User",
+  "email": "sara@demo.com",
+  "password": "password1234"
+}
+
+# ==============================================================================
+# Phase 2: Role Authorization Checks
+# ==============================================================================
+
+### 9. Client tries to call specialist portal — MUST RETURN 403 FORBIDDEN
+GET {{baseUrl}}/api/specialist/clients
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 10. Specialist calls specialist portal — MUST RETURN 200 with care team clients
+GET {{baseUrl}}/api/specialist/clients
+Authorization: Bearer {{loginMona.response.body.data.token}}
+
+# ==============================================================================
+# Phase 2: Profile & Onboarding Endpoints
+# ==============================================================================
+
+### 11. GET Sara's profile and injuries
+GET {{baseUrl}}/api/profile
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 12. Onboarding Step 1 — Update Goals & Training Days
+PUT {{baseUrl}}/api/profile
+Authorization: Bearer {{registerClient.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "goal": "lose_fat",
+  "daysPerWeek": 4
+}
+
+### 13. Onboarding Step 2 — Update Anthropometrics & Activity
+PUT {{baseUrl}}/api/profile
+Authorization: Bearer {{registerClient.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "age": 28,
+  "heightCm": 178,
+  "weightKg": 82,
+  "activityLevel": "moderate"
+}
+
+### 14. Onboarding Step 3 — Update Injuries (Replace list)
+PUT {{baseUrl}}/api/profile
+Authorization: Bearer {{registerClient.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "injuries": [
+    {
+      "bodyArea": "lower_back",
+      "painLevel": 4,
+      "duration": "weeks",
+      "doctorSeen": true,
+      "note": "Aches after sitting long hours at desk"
+    }
+  ]
+}
+
+### 15. Onboarding Step 4 — Update Diet & Nutrition Preferences
+PUT {{baseUrl}}/api/profile
+Authorization: Bearer {{registerClient.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "dietStyle": "high_protein",
+  "allergies": ["shellfish"],
+  "mealsPerDay": 3,
+  "dislikedFoods": "okra, eggplants",
+  "phone": "+20 100 999 8888"
+}
+
+### 16. Complete Onboarding
+POST {{baseUrl}}/api/profile/complete
+Authorization: Bearer {{registerClient.response.body.data.token}}
+
+### 17. Verify completed profile
+GET {{baseUrl}}/api/profile
+Authorization: Bearer {{registerClient.response.body.data.token}}
+
+# ==============================================================================
+# Phase 3: Specialists, Slots & Bookings
+# ==============================================================================
+
+### 18. List all approved specialists
+GET {{baseUrl}}/api/specialists
+
+### 19. Filter specialists by type (trainers)
+GET {{baseUrl}}/api/specialists?type=move
+
+### 20. Search specialists (by name or focus)
+GET {{baseUrl}}/api/specialists?q=mona
+
+### 21. Sort specialists by experience
+GET {{baseUrl}}/api/specialists?sort=exp
+
+### 22. Get Dr. Mona's details and packages (user_id 5)
+# @name getMona
+GET {{baseUrl}}/api/specialists/5
+
+### 23. Get open future slots for Dr. Mona
+# @name getMonaSlots
+GET {{baseUrl}}/api/specialists/5/slots
+
+### 24. Book an appointment with Dr. Mona
+# @name createBooking
+POST {{baseUrl}}/api/bookings
+Authorization: Bearer {{loginSara.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "specialistId": 5,
+  "slotId": {{getMonaSlots.response.body.data.slots[0].id}},
+  "sessionType": "video",
+  "notes": "Follow-up on right knee meniscus"
+}
+
+### 25. Simultaneous booking attempt on same slot — MUST RETURN 409 SLOT_TAKEN
+POST {{baseUrl}}/api/bookings
+Authorization: Bearer {{registerClient.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "specialistId": 5,
+  "slotId": {{getMonaSlots.response.body.data.slots[0].id}},
+  "sessionType": "video"
+}
+
+### 26. List Sara's upcoming bookings
+GET {{baseUrl}}/api/bookings?tab=upcoming
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 27. List Sara's past bookings
+GET {{baseUrl}}/api/bookings?tab=past
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 28. Reschedule booking to another slot
+PATCH {{baseUrl}}/api/bookings/{{createBooking.response.body.data.booking.id}}/reschedule
+Authorization: Bearer {{loginSara.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "slotId": {{getMonaSlots.response.body.data.slots[1].id}}
+}
+
+### 29. Cancel the booking (frees the slot)
+PATCH {{baseUrl}}/api/bookings/{{createBooking.response.body.data.booking.id}}/cancel
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 30. Get session mock info
+GET {{baseUrl}}/api/bookings/1/session
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+# ==============================================================================
+# Phase 4: Today, Plans, Completions & Progress
+# ==============================================================================
+
+### 31. GET /api/dashboard/today for Sara (matches Section 5 shape & numbers)
+# @name getTodayDashboard
+GET {{baseUrl}}/api/dashboard/today
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 32. GET /api/plans for Sara — returns all 3 active plans (move, eat, recover)
+GET {{baseUrl}}/api/plans
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 33. GET /api/plans?service=move for Sara — strength plan with days & items
+GET {{baseUrl}}/api/plans?service=move
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 34. Check off an item on Today's plan as done
+PUT {{baseUrl}}/api/completions
+Authorization: Bearer {{loginSara.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "planItemId": {{getTodayDashboard.response.body.data.plan[0].itemId}},
+  "status": "done"
+}
+
+### 35. Reset item to pending
+PUT {{baseUrl}}/api/completions
+Authorization: Bearer {{loginSara.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "planItemId": {{getTodayDashboard.response.body.data.plan[0].itemId}},
+  "status": "pending"
+}
+
+### 36. GET /api/progress for Sara (4w range)
+GET {{baseUrl}}/api/progress?range=4w
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 37. Log today's progress check-in
+PUT {{baseUrl}}/api/progress
+Authorization: Bearer {{loginSara.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "weightKg": 72.5,
+  "workoutDone": true,
+  "painLevel": 3,
+  "note": "Knee felt stable throughout box squats"
+}
+
+# ==============================================================================
+# Phase 5: AI Planner & Fallback
+# ==============================================================================
+
+### 38. Generate an AI plan draft (with Knee injury & 4 days/week)
+# @name generateAiPlan
+POST {{baseUrl}}/api/ai/plan
+Authorization: Bearer {{loginSara.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "goal": "lose_fat",
+  "daysPerWeek": 4,
+  "injuries": [
+    {
+      "bodyArea": "knee",
+      "painLevel": 3
+    }
+  ],
+  "equipment": ["Full gym"],
+  "diet": "High protein"
+}
+
+### 39. Send AI draft to specialists for clinical review
+POST {{baseUrl}}/api/ai/plan/{{generateAiPlan.response.body.data.requestId}}/send
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+# ==============================================================================
+# Phase 6: Checkout, Specialist Portal, & Admin
+# ==============================================================================
+
+### 40. Client checkout — creates Starter subscription (399 EGP)
+POST {{baseUrl}}/api/checkout
+Authorization: Bearer {{loginSara.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "planName": "Starter",
+  "method": "card"
+}
+
+### 41. GET client current active subscription
+GET {{baseUrl}}/api/checkout/current
+Authorization: Bearer {{loginSara.response.body.data.token}}
+
+### 42. Specialist views clients (with flags and pain trends)
+GET {{baseUrl}}/api/specialist/clients
+Authorization: Bearer {{loginMona.response.body.data.token}}
+
+### 43. Specialist searches clients (?q=sara)
+GET {{baseUrl}}/api/specialist/clients?q=sara
+Authorization: Bearer {{loginMona.response.body.data.token}}
+
+### 44. Specialist views client full dossier (Sara)
+GET {{baseUrl}}/api/specialist/clients/1
+Authorization: Bearer {{loginMona.response.body.data.token}}
+
+### 45. Specialist updates and activates rehab plan for Sara
+PUT {{baseUrl}}/api/specialist/clients/1/plans/recover
+Authorization: Bearer {{loginMona.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "title": "Dr. Mona's Updated Knee Rehab Protocol",
+  "summary": "Increased quad set volume. Cleared for partial box squats.",
+  "status": "active",
+  "items": [
+    {
+      "dayOfWeek": 1,
+      "position": 0,
+      "timeOfDay": "20:00",
+      "title": "Quad sets with isometric hold",
+      "instructions": "Tighten thigh, press knee down, hold 5 seconds.",
+      "sets": 4,
+      "reps": "15",
+      "painLimit": 3,
+      "ptCleared": true
+    },
+    {
+      "dayOfWeek": 1,
+      "position": 1,
+      "timeOfDay": "20:00",
+      "title": "Heel slides on smooth mat",
+      "instructions": "Slow controlled slide until light tension.",
+      "sets": 3,
+      "reps": "12",
+      "painLimit": 3,
+      "ptCleared": true
+    }
+  ]
+}
+
+### 46. Specialist creates a note for Sara
+POST {{baseUrl}}/api/specialist/clients/1/notes
+Authorization: Bearer {{loginMona.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "body": "Sara showed good quad activation in today's check-in.",
+  "visibleToClient": true
+}
+
+### 47. Specialist views weekly schedule and bookings
+GET {{baseUrl}}/api/specialist/schedule
+Authorization: Bearer {{loginMona.response.body.data.token}}
+
+### 48. Admin login
+# @name loginAdmin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@demo.com",
+  "password": "demo1234"
+}
+
+### 49. Admin overview — platform statistics and recent activity
+GET {{baseUrl}}/api/admin/overview
+Authorization: Bearer {{loginAdmin.response.body.data.token}}
+
+### 50. Admin lists users (?role=specialist)
+GET {{baseUrl}}/api/admin/users?role=specialist
+Authorization: Bearer {{loginAdmin.response.body.data.token}}
+
+### 51. Admin lists pending specialist applications
+GET {{baseUrl}}/api/admin/specialists?status=pending
+Authorization: Bearer {{loginAdmin.response.body.data.token}}
+
+### 52. Admin approves Dr. Yasmin Farouk (User ID 9)
+PATCH {{baseUrl}}/api/admin/specialists/9/approval
+Authorization: Bearer {{loginAdmin.response.body.data.token}}
+Content-Type: application/json
+
+{
+  "status": "approved"
+}
+
+
+
+

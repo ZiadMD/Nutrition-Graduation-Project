@@ -1,0 +1,168 @@
+[
+  {
+    "id": "meal_foul",
+    "title": "Foul medames with egg and baladi bread",
+    "mealType": "breakfast",
+    "kcal": 420,
+    "proteinG": 24,
+    "carbsG": 48,
+    "fatG": 14,
+    "tags": ["egyptian", "high_protein"],
+    "avoidFor": []
+  },
+  {
+    "id": "meal_oats",
+    "title": "Oats with milk, dates, and almonds",
+    "mealType": "breakfast",
+    "kcal": 400,
+    "proteinG": 20,
+    "carbsG": 56,
+    "fatG": 12,
+    "tags": ["dairy"],
+    "avoidFor": ["dairy"]
+  },
+  {
+    "id": "meal_shakshuka",
+    "title": "Shakshuka — 2 eggs in tomato sauce with baladi bread",
+    "mealType": "breakfast",
+    "kcal": 380,
+    "proteinG": 22,
+    "carbsG": 38,
+    "fatG": 16,
+    "tags": ["egyptian", "eggs"],
+    "avoidFor": ["eggs"]
+  },
+  {
+    "id": "meal_grilled_chicken_rice",
+    "title": "Grilled chicken breast with rice and molokhia",
+    "mealType": "lunch",
+    "kcal": 610,
+    "proteinG": 46,
+    "carbsG": 62,
+    "fatG": 16,
+    "tags": ["egyptian", "high_protein"],
+    "avoidFor": []
+  },
+  {
+    "id": "meal_tilapia_bulgur",
+    "title": "Grilled tilapia with bulgur and roasted vegetables",
+    "mealType": "lunch",
+    "kcal": 580,
+    "proteinG": 44,
+    "carbsG": 58,
+    "fatG": 14,
+    "tags": ["fish", "high_protein"],
+    "avoidFor": ["shellfish"]
+  },
+  {
+    "id": "meal_kofta",
+    "title": "Grilled kofta with tahini salad and baladi bread",
+    "mealType": "dinner",
+    "kcal": 520,
+    "proteinG": 36,
+    "carbsG": 38,
+    "fatG": 24,
+    "tags": ["egyptian", "high_protein"],
+    "avoidFor": ["nuts"]
+  },
+  {
+    "id": "meal_lentil_soup",
+    "title": "Lentil soup with tuna salad and toast",
+    "mealType": "dinner",
+    "kcal": 480,
+    "proteinG": 34,
+    "carbsG": 46,
+    "fatG": 14,
+    "tags": ["egyptian", "fish", "high_protein"],
+    "avoidFor": ["shellfish"]
+  },
+  {
+    "id": "meal_chicken_shish",
+    "title": "Grilled chicken shish with grilled vegetables",
+    "mealType": "dinner",
+    "kcal": 450,
+    "proteinG": 40,
+    "carbsG": 30,
+    "fatG": 18,
+    "tags": ["high_protein", "low_carb"],
+    "avoidFor": []
+  },
+  {
+    "id": "meal_greek_yogurt",
+    "title": "Greek yogurt with walnuts and banana",
+    "mealType": "snack",
+    "kcal": 280,
+    "proteinG": 18,
+    "carbsG": 30,
+    "fatG": 9,
+    "tags": ["dairy", "nuts"],
+    "avoidFor": ["dairy", "nuts"]
+  },
+  {
+    "id": "meal_labneh",
+    "title": "Labneh with cucumber and half baladi bread",
+    "mealType": "snack",
+    "kcal": 240,
+    "proteinG": 14,
+    "carbsG": 26,
+    "fatG": 8,
+    "tags": ["dairy", "egyptian"],
+    "avoidFor": ["dairy"]
+  },
+  {
+    "id": "meal_cottage_cheese",
+    "title": "Cottage cheese with tomato and whole-wheat crackers",
+    "mealType": "snack",
+    "kcal": 220,
+    "proteinG": 16,
+    "carbsG": 22,
+    "fatG": 7,
+    "tags": ["dairy", "high_protein"],
+    "avoidFor": ["dairy"]
+  },
+  {
+    "id": "meal_koshari",
+    "title": "Koshari — lighter portion",
+    "mealType": "lunch",
+    "kcal": 520,
+    "proteinG": 18,
+    "carbsG": 84,
+    "fatG": 12,
+    "tags": ["egyptian", "vegetarian"],
+    "avoidFor": []
+  },
+  {
+    "id": "meal_turkey_freekeh",
+    "title": "Grilled turkey breast with freekeh and green salad",
+    "mealType": "lunch",
+    "kcal": 560,
+    "proteinG": 42,
+    "carbsG": 54,
+    "fatG": 14,
+    "tags": ["high_protein"],
+    "avoidFor": []
+  },
+  {
+    "id": "meal_tuna_wrap",
+    "title": "Tuna wrap with lettuce and low-fat mayo",
+    "mealType": "snack",
+    "kcal": 350,
+    "proteinG": 28,
+    "carbsG": 34,
+    "fatG": 10,
+    "tags": ["fish", "high_protein"],
+    "avoidFor": ["shellfish", "gluten"]
+  },
+  {
+    "id": "meal_halloumi_salad",
+    "title": "Grilled halloumi with mixed salad",
+    "mealType": "lunch",
+    "kcal": 490,
+    "proteinG": 28,
+    "carbsG": 24,
+    "fatG": 32,
+    "tags": ["dairy", "vegetarian"],
+    "avoidFor": ["dairy"]
+  }
+]
+
