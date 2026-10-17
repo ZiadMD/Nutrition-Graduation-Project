@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { Search, ChevronRight } from 'lucide-react'
 import { Avatar, Btn, Card, EmptyState, Gate, inputCls, PageHead, Segment, StateSwitcher, TableSkeleton, type DemoState } from '../../ui'
 import { clients as mockClients, overLimit } from '../../data'
-import { Flag, PainTrend } from './parts'
+import { Flag, PainTrend } from '@/components'
 import { api } from '../../api'
 
 export default function Clients() {

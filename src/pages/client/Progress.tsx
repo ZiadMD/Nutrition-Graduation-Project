@@ -7,99 +7,11 @@ const baseWeight = [76.4, 76.1, 75.9, 75.8, 75.2, 75.0, 74.6, 74.5, 74.1, 73.6, 
 const baseWorkouts = [1, 2, 2, 3, 2, 3, 3, 4, 3, 4, 4, 3]
 const basePain = [6, 6, 5, 5, 5, 4, 4, 4, 3, 3, 3, 3]
 
-function useWidth() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [w, setW] = useState(600)
-  useEffect(() => {
-    if (!ref.current) return
-    const ro = new ResizeObserver(([e]) => setW(Math.max(260, Math.floor(e.contentRect.width))))
-    ro.observe(ref.current)
-    return () => ro.disconnect()
-  }, [])
-  return [ref, w] as const
-}
+import { LineChart } from '@/components/charts/LineChart'
+import { BarChart } from '@/components/charts/BarChart'
 
-type ChartProps = { labels: string[]; data: number[]; min: number; max: number; ticks: number[]; unit: string; desc: string }
-const H = 240
-const pad = { l: 40, r: 56, t: 16, b: 32 }
+export { LineChart, BarChart }
 
-function Axes({ w, labels, ticks, y, n }: { w: number; labels: string[]; ticks: number[]; y: (v: number) => number; n: number }) {
-  const x = (i: number) => pad.l + (n === 1 ? 0 : (i * (w - pad.l - pad.r)) / (n - 1))
-  const every = w < 420 ? Math.ceil(n / 3) : w < 600 ? Math.ceil(n / 5) : Math.ceil(n / 7)
-  return (
-    <g fontSize="12" fill="#5B616B">
-      {ticks.map((t) => (
-        <g key={t}>
-          <line x1={pad.l} x2={w - pad.r} y1={y(t)} y2={y(t)} stroke="#E6E2DA" />
-          <text x={pad.l - 8} y={y(t) + 4} textAnchor="end">{t}</text>
-        </g>
-      ))}
-      <line x1={pad.l} x2={w - pad.r} y1={H - pad.b} y2={H - pad.b} stroke="#14161A" />
-      {labels.map((l, i) => ((n - 1 - i) % every === 0 ? <text key={l} x={x(i)} y={H - 10} textAnchor="middle">{l}</text> : null))}
-    </g>
-  )
-}
-
-export function LineChart({ labels, data, min, max, ticks, unit, desc, color, safeBelow }: ChartProps & { color: string; safeBelow?: number }) {
-  const [ref, w] = useWidth()
-  const n = data.length
-  const x = (i: number) => pad.l + (n === 1 ? 0 : (i * (w - pad.l - pad.r)) / (n - 1))
-  const y = (v: number) => pad.t + ((max - v) / (max - min)) * (H - pad.t - pad.b)
-  const pts = data.map((v, i) => `${x(i)},${y(v)}`).join(' ')
-  const last = data.length - 1
-  return (
-    <div ref={ref} className="w-full">
-      <svg width={w} height={H} role="img" aria-label={desc}>
-        {safeBelow !== undefined && (
-          <g>
-            <rect x={pad.l} y={y(safeBelow)} width={w - pad.l - pad.r} height={y(min) - y(safeBelow)} fill="#D9F2EE" />
-            <text x={pad.l + 8} y={y(safeBelow) + 16} fontSize="12" fontWeight="700" fill="#14161A">Safe zone: {safeBelow} or below</text>
-          </g>
-        )}
-        <Axes w={w} labels={labels} ticks={ticks} y={y} n={n} />
-        <polyline points={pts} fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
-        {data.map((v, i) => (i === 0 || i === last ? <circle key={i} cx={x(i)} cy={y(v)} r="5" fill={color} stroke="#fff" strokeWidth="2" /> : null))}
-        <text x={x(0)} y={y(data[0]) - 12} fontSize="13" fontWeight="700" fill="#14161A" textAnchor="start">{data[0]} {unit}</text>
-        <text x={x(last) + 10} y={y(data[last]) + 4} fontSize="14" fontWeight="800" fill="#14161A">{data[last]} {unit}</text>
-      </svg>
-    </div>
-  )
-}
-
-export function BarChart({ labels, data, target }: { labels: string[]; data: number[]; target: number }) {
-  const [ref, w] = useWidth()
-  const n = data.length
-  const max = 6
-  const y = (v: number) => pad.t + ((max - v) / max) * (H - pad.t - pad.b)
-  const slot = (w - pad.l - pad.r) / n
-  const bw = Math.min(36, slot * 0.6)
-  const cx = (i: number) => pad.l + slot * i + slot / 2
-  const every = w < 420 ? Math.ceil(n / 3) : w < 600 ? Math.ceil(n / 5) : Math.ceil(n / 7)
-  return (
-    <div ref={ref} className="w-full">
-      <svg width={w} height={H} role="img" aria-label={`Workouts per week, target ${target}. Latest week: ${data[n - 1]}.`}>
-        <g fontSize="12" fill="#5B616B">
-          {[0, 2, 4, 6].map((t) => (
-            <g key={t}>
-              <line x1={pad.l} x2={w - pad.r} y1={y(t)} y2={y(t)} stroke="#E6E2DA" />
-              <text x={pad.l - 8} y={y(t) + 4} textAnchor="end">{t}</text>
-            </g>
-          ))}
-          <line x1={pad.l} x2={w - pad.r} y1={H - pad.b} y2={H - pad.b} stroke="#14161A" />
-          {labels.map((l, i) => ((n - 1 - i) % every === 0 ? <text key={l + i} x={cx(i)} y={H - 10} textAnchor="middle">{l}</text> : null))}
-        </g>
-        {data.map((v, i) => (
-          <g key={i}>
-            <rect x={cx(i) - bw / 2} y={y(v)} width={bw} height={y(0) - y(v)} rx="4" fill="#FF6A3D" />
-            {(n <= 8 || i === n - 1) && <text x={cx(i)} y={y(v) - 6} textAnchor="middle" fontSize="12" fontWeight="700" fill="#14161A">{v}</text>}
-          </g>
-        ))}
-        <line x1={pad.l} x2={w - pad.r} y1={y(target)} y2={y(target)} stroke="#14161A" strokeDasharray="5 4" strokeWidth="1.5" />
-        <text x={w - pad.r + 6} y={y(target) + 4} fontSize="13" fontWeight="800" fill="#14161A">Target {target}</text>
-      </svg>
-    </div>
-  )
-}
 
 function ChartCard({ icon, title, summary, children }: { icon: React.ReactNode; title: string; summary: React.ReactNode; children: React.ReactNode }) {
   return (

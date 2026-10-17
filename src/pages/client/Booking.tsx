@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { ArrowLeft, ArrowRight, Check, MessageSquare, Video, Info } from 'lucide-react'
 import { Avatar, Btn, Card, EmptyState, SVC, Tag } from '../../ui'
-import { specialists as staticSpecialists, packagesFor, days, slotsFor, t12, egp, sessionPrice, nextSlots } from '../../data'
+import { specialists as staticSpecialists, packagesFor, days, slotsFor, t12, egp, sessionPrice, nextSlots, type Svc } from '../../data'
 import { api } from '../../api'
 
 const steps = ['Package', 'Date and time', 'Review']
@@ -51,6 +51,7 @@ export default function Booking() {
     : staticSpecialists.find((x) => x.id === id)
 
   const resched = sp.get('reschedule') === '1'
+  const reschedBookingId = sp.get('bookingId') || sp.get('booking_id') || undefined
   const pre = nextSlots(id ?? '', 4)[Number(sp.get('slot') ?? 0)]
   const [step, setStep] = useState(resched ? 1 : 0)
   const [pkg, setPkg] = useState('single')
@@ -264,7 +265,7 @@ export default function Booking() {
               <div className="flex justify-between gap-3"><dt className="text-ink-2">Type</dt><dd className="font-semibold">{type}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-ink-2">When</dt><dd className="font-semibold text-right">{when ?? 'Not chosen yet'}</dd></div>
             </dl>
-            <div className={`mt-5 rounded-xl p-4 flex items-baseline justify-between ${SVC[s.svc].tint}`}>
+            <div className={`mt-5 rounded-xl p-4 flex items-baseline justify-between ${(SVC[(s.svc as Svc) || 'move'] || SVC.move).tint}`}>
               <span className="font-semibold">Total</span>
               <span className="num text-[28px]">{egp(total)}</span>
             </div>

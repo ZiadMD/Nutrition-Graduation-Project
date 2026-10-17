@@ -110,6 +110,9 @@ function SpecialistToday() {
 
 export function Today() {
   const role = useRole()
-  return role === 'Client' ? <ClientToday /> : role === 'Specialist' ? <SpecialistToday /> : <Navigate to="/app/overview" replace />
+  if (role === 'Client') return <ClientToday />
+  if (role === 'Specialist') return <SpecialistToday />
+  if (role === 'Finance') return <Navigate to="/app/finance/overview" replace />
+  return <Navigate to="/app/overview" replace />
 }
 

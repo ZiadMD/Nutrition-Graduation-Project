@@ -3,23 +3,11 @@ import { NavLink, Outlet, useLocation, useNavigate, Link, useOutletContext } fro
 import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard } from 'lucide-react'
 import { Btn, Card, EmptyState, Wordmark } from '../ui'
 
-export type Role = 'Client' | 'Specialist' | 'Admin' | 'Finance'
-type Ctx = { role: Role; setRole: (r: Role) => void }
-export const useRole = () => useOutletContext<Ctx>().role
+import { RoleOnly, type Role, type RoleContextType } from '@/components/auth/RoleOnly'
+export { RoleOnly, type Role }
 
-export function RoleOnly({ role: need, children }: { role: Role; children: React.ReactNode }) {
-  const { role, setRole } = useOutletContext<Ctx>()
-  if (role === need) return <>{children}</>
-  return (
-    <Card>
-      <EmptyState
-        title={`This page is for the ${need.toLowerCase()} view`}
-        text={`You are looking at Rebound as ${role === 'Client' ? 'a client' : role === 'Specialist' ? 'a specialist' : role === 'Finance' ? 'a finance officer' : 'an admin'}. Switch your account to see this page.`}
-        action={<Btn onClick={() => setRole(need)}>Switch to {need.toLowerCase()} view</Btn>}
-      />
-    </Card>
-  )
-}
+type Ctx = RoleContextType
+export const useRole = () => useOutletContext<Ctx>().role
 
 const nav = [
   { to: '/app/today', label: 'Today', Icon: House },
@@ -50,21 +38,21 @@ const navs: Record<Role, typeof nav> = {
 }
 const allNav = [...nav, ...navs.Specialist.slice(1), ...navs.Admin, ...navs.Finance]
 
-import { api, IS_DEMO_MODE, getStoredUser, getToken } from '../api'
+import { api, IS_DEMO_MODE, getStoredUser, getToken, removeToken } from '../api'
 
 function RoleSwitch({ role, setRole }: { role: Role; setRole: (r: Role) => void }) {
   if (!IS_DEMO_MODE) return null
   return (
     <div>
       <p className="label text-ink-2 uppercase mb-2">Demo role</p>
-      <div role="radiogroup" aria-label="Demo role" className="grid grid-cols-3 gap-1 p-1 bg-paper border border-line rounded-xl">
-        {(['Client', 'Specialist', 'Admin'] as Role[]).map((r) => (
+      <div role="radiogroup" aria-label="Demo role" className="grid grid-cols-2 gap-1 p-1 bg-paper border border-line rounded-xl">
+        {(['Client', 'Specialist', 'Admin', 'Finance'] as Role[]).map((r) => (
           <button
             key={r}
             role="radio"
             aria-checked={role === r}
             onClick={() => setRole(r)}
-            className={`min-h-11 rounded-lg text-[13px] font-bold cursor-pointer ${role === r ? 'bg-ink text-white' : 'hover:bg-ink/5'}`}
+            className={`min-h-10 rounded-lg text-[12px] font-bold cursor-pointer transition ${role === r ? 'bg-ink text-white' : 'hover:bg-ink/5 text-ink'}`}
           >
             {r}
           </button>
@@ -102,6 +90,13 @@ const roleFromUser = (u: any): Role => {
   return 'Client'
 }
 
+const DEMO_USERS: Record<Role, { id: number; name: string; email: string; role: string }> = {
+  Client: { id: 1, name: 'Sara Hassan', email: 'sara@demo.com', role: 'client' },
+  Specialist: { id: 2, name: 'Dr. Mona Fathy', email: 'mona@demo.com', role: 'specialist' },
+  Admin: { id: 3, name: 'Admin team', email: 'admin@demo.com', role: 'admin' },
+  Finance: { id: 4, name: 'Tamer Fahmy', email: 'finance@demo.com', role: 'finance' },
+}
+
 export default function Shell() {
   const [currentUser, setCurrentUser] = useState<any>(getStoredUser())
   const [role, setRole] = useState<Role>(roleFromUser(getStoredUser()))
@@ -129,9 +124,11 @@ export default function Shell() {
       try {
         const res = await api.login(creds[r].email, creds[r].pass)
         setCurrentUser(res.user)
-      } catch (err) {
-        console.error('Demo login switch error:', err)
+      } catch {
+        setCurrentUser(DEMO_USERS[r])
       }
+    } else {
+      setCurrentUser(DEMO_USERS[r])
     }
     setRole(r)
     go(home(r))
@@ -139,22 +136,29 @@ export default function Shell() {
 
   useEffect(() => {
     const initAuth = async () => {
-      if (getToken()) {
+      const token = getToken()
+      if (token) {
         try {
           const user = await api.getMe()
           setCurrentUser(user)
           setRole(roleFromUser(user))
+          return
         } catch {
-          // Token invalid, handled by apiFetch
+          removeToken()
         }
-      } else if (IS_DEMO_MODE) {
+      }
+      if (IS_DEMO_MODE) {
         try {
           const res = await api.login('sara@demo.com', 'demo1234')
           setCurrentUser(res.user)
-          setRole('Client')
+          setRole(roleFromUser(res.user))
         } catch {
-          // Ignore
+          const initialRole = role || 'Client'
+          setCurrentUser(DEMO_USERS[initialRole])
+          setRole(initialRole)
         }
+      } else {
+        go('/login', { replace: true })
       }
     }
     initAuth()
@@ -168,7 +172,7 @@ export default function Shell() {
       .filter(Boolean)
       .slice(0, 2)
       .map((w: string) => w[0]?.toUpperCase())
-      .join('') || (role === 'Client' ? 'SH' : role === 'Specialist' ? 'MF' : role === 'Finance' ? 'TF' : 'AD')
+      .join('') || (role === 'Specialist' ? 'MF' : role === 'Finance' ? 'TF' : role === 'Admin' ? 'AD' : 'SH')
 
   useEffect(() => {
     setMore(false)
@@ -191,9 +195,9 @@ export default function Shell() {
             </NavLink>
           ))}
         </nav>
-        {/* <div className="mt-auto">
+        <div className="mt-auto">
           <RoleSwitch role={role} setRole={changeRole} />
-        </div> */}
+        </div>
       </aside>
 
       <div className="lg:pl-[264px]">
@@ -273,7 +277,7 @@ export default function Shell() {
           </div>
         </header>
         <main className="px-5 lg:px-10 py-8 pb-12 max-w-[1200px]">
-          <Outlet context={{ role, setRole }} />
+          <Outlet context={{ role, setRole: changeRole }} />
         </main>
       </div>
 
@@ -318,7 +322,7 @@ export default function Shell() {
             </div>
 
             <div className="mt-auto pt-6">
-              {/* <RoleSwitch role={role} setRole={changeRole} /> */}
+              <RoleSwitch role={role} setRole={changeRole} />
               <button className="mt-4 w-full min-h-12 px-4 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer" onClick={() => { api.logout(); go('/login') }}>
                 <LogOut size={20} aria-hidden /> Log out
               </button>

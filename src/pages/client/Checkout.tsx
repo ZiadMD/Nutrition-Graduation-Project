@@ -11,7 +11,7 @@ const methods = [
   ['InstaPay', Landmark, 'Pay from your bank app'],
 ] as const
 
-import { api } from '../../api'
+import { api, getStoredUser } from '../../api'
 
 export default function Checkout() {
   const loc = useLocation()
@@ -20,7 +20,7 @@ export default function Checkout() {
   }
   const s = specialists.find((x) => x.id === o.spId) || specialists[0]
   const [m, setM] = useState<(typeof methods)[number][0]>('Card')
-  const [f, setF] = useState({ name: 'Sara Hassan', num: '', exp: '', cvc: '', phone: '', handle: '' })
+  const [f, setF] = useState(() => ({ name: getStoredUser()?.name || '', num: '', exp: '', cvc: '', phone: '', handle: '' }))
   const [err, setErr] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [paid, setPaid] = useState(false)

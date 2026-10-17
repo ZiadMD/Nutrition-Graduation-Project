@@ -3,8 +3,8 @@ import { Link, useParams } from 'react-router'
 import { ArrowLeft, Plus, ShieldCheck, Hourglass, Trash2, CircleCheck, Mail, Phone, Users } from 'lucide-react'
 import { Avatar, Btn, Card, Dialog, EmptyState, Field, inputCls, SafetyCallout, Segment, Tabs } from '../../ui'
 import { clients, painTrend } from '../../data'
-import { LineChart, BarChart, labels } from '../client/Progress'
-import { Flag, PainTrend } from './parts'
+import { LineChart, BarChart, Flag, PainTrend } from '@/components'
+import { labels } from '../client/Progress'
 import { api } from '../../api'
 
 type Ex = { id: number; name: string; sets: number; reps: number; cleared: boolean }

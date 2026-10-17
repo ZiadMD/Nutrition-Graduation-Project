@@ -3,10 +3,19 @@ import { Search, ReceiptText, CreditCard, Filter, Download } from 'lucide-react'
 import { Card, PageHead, Skeleton, Gate, inputCls, Segment, type DemoState, Btn } from '../../ui'
 import { api } from '../../api'
 
+const PREVIEW_TRANSACTIONS = [
+  { id: '1', type: 'subscription', reference: 'SUB-2026-001', customer_name: 'Sara Hassan', customer_email: 'sara@demo.com', description: 'Full Team Subscription', method: 'card', created_at: '2026-10-15T10:00:00Z', amount_egp: 1499 },
+  { id: '2', type: 'session', reference: 'SES-2026-042', customer_name: 'Omar Khaled', customer_email: 'omar@demo.com', description: 'Rehab Session with Dr. Mona', method: 'instapay', created_at: '2026-10-14T16:30:00Z', amount_egp: 450 },
+  { id: '3', type: 'subscription', reference: 'SUB-2026-002', customer_name: 'Laila Mostafa', customer_email: 'laila@demo.com', description: 'Plus Plan Subscription', method: 'vodafone_cash', created_at: '2026-10-12T11:20:00Z', amount_egp: 899 },
+  { id: '4', type: 'session', reference: 'SES-2026-043', customer_name: 'Youssef Nabil', customer_email: 'youssef@demo.com', description: 'Strength Review with Coach Karim', method: 'card', created_at: '2026-10-10T14:00:00Z', amount_egp: 350 },
+  { id: '5', type: 'subscription', reference: 'SUB-2026-003', customer_name: 'Mariam Adel', customer_email: 'mariam@demo.com', description: 'Starter Plan Subscription', method: 'fawry', created_at: '2026-10-08T09:45:00Z', amount_egp: 399 },
+  { id: '6', type: 'session', reference: 'SES-2026-044', customer_name: 'Tarek Samir', customer_email: 'tarek@demo.com', description: 'Dietary Consultation with Hana Ibrahim', method: 'instapay', created_at: '2026-10-05T13:15:00Z', amount_egp: 300 },
+]
+
 export default function FinanceTransactions() {
   const [state, setState] = useState<DemoState>('loading')
-  const [transactions, setTransactions] = useState<any[]>([])
-  const [totalCount, setTotalCount] = useState(0)
+  const [transactions, setTransactions] = useState<any[]>(PREVIEW_TRANSACTIONS)
+  const [totalCount, setTotalCount] = useState(PREVIEW_TRANSACTIONS.length)
   const [q, setQ] = useState('')
   const [typeFilter, setTypeFilter] = useState('All')
   const [methodFilter, setMethodFilter] = useState('All')
@@ -23,8 +32,22 @@ export default function FinanceTransactions() {
         setState('loaded')
       })
       .catch((err) => {
-        console.error('Failed to load transactions:', err)
-        setState('error')
+        console.warn('Backend unavailable, using preview transactions:', err)
+        let filtered = PREVIEW_TRANSACTIONS
+        if (t) filtered = filtered.filter((tx) => tx.type === t)
+        if (m) filtered = filtered.filter((tx) => tx.method === m)
+        if (q) {
+          const lower = q.toLowerCase()
+          filtered = filtered.filter(
+            (tx) =>
+              tx.customer_name.toLowerCase().includes(lower) ||
+              tx.reference.toLowerCase().includes(lower) ||
+              tx.description.toLowerCase().includes(lower)
+          )
+        }
+        setTransactions(filtered)
+        setTotalCount(filtered.length)
+        setState('loaded')
       })
   }
 

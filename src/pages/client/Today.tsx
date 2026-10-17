@@ -37,7 +37,7 @@ function getGreeting(name: string) {
 export default function ClientToday() {
   const nav = useNavigate()
   const [loading, setLoading] = useState(true)
-  const [userName, setUserName] = useState(() => getStoredUser()?.name || 'Sara')
+  const [userName, setUserName] = useState(() => getStoredUser()?.name || '')
   const [dashboard, setDashboard] = useState<any>(null)
   const [done, setDone] = useState<string[]>([])
   const [pain, setPain] = useState(3)
@@ -209,8 +209,8 @@ export default function ClientToday() {
           <ul className="space-y-3">
             {loading
               ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-24" />)
-              : items.map((p) => {
-                  const s = SVC[p.svc]
+              : items.map((p: any) => {
+                  const s = SVC[p.svc as Svc] || SVC.move
                   const d = done.includes(p.id)
                   return (
                     <li key={p.id} className={`${s.tint} rounded-2xl p-4 sm:p-5`}>

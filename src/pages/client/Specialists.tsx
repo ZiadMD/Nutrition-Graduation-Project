@@ -33,6 +33,14 @@ function getInitials(name = '') {
     .join('')
 }
 
+function parseFocusTags(raw: any): string[] {
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') {
+    return raw.split(',').map((x) => x.trim()).filter(Boolean)
+  }
+  return ['Rehab', 'Strength']
+}
+
 export function SpecialistsList() {
   const [f, setF] = useState<Filter>('all')
   const [q, setQ] = useState('')
@@ -138,7 +146,7 @@ export function SpecialistsList() {
                         <p className="text-[14px] mt-1 flex items-center gap-2 text-ink-2"><Globe size={16} aria-hidden /> {s.langs} · {s.years} years</p>
                       </div>
                     </div>
-                    <div className={`rounded-xl p-3 ${SVC[s.svc].tint}`}>
+                    <div className={`rounded-xl p-3 ${(SVC[(s.svc as Svc) || 'move'] || SVC.move).tint}`}>
                       <p className="text-[13px] font-semibold">Next available</p>
                       <p className="font-bold">{s.nextSlot}</p>
                     </div>
@@ -195,7 +203,7 @@ export function SpecialistProfile() {
         sessions: spData.sessionsCompleted || spData.sessions_completed || 120,
         rate: spData.rateEgp || spData.rate_egp || 450,
         about: spData.bio || 'Experienced specialist working in Cairo and Alexandria.',
-        focus: spData.focusTags || (spData.focus_tags ? spData.focus_tags.split(',') : ['Rehab', 'Strength']),
+        focus: parseFocusTags(spData.focusTags ?? spData.focus_tags ?? spData.focus),
         how: 'I review your weekly progress reports and coordinate plan adjustments with your care team.',
         packages: spData.packages && spData.packages.length > 0 ? spData.packages : packagesFor(spData.rateEgp || 450),
       }
@@ -255,7 +263,7 @@ export function SpecialistProfile() {
       </Link>
       <div className="grid lg:grid-cols-[1fr_340px] gap-8 items-start">
         <div>
-          <div className={`rounded-[28px] p-6 sm:p-8 ${SVC[s.svc].tint} flex flex-col sm:flex-row gap-6 sm:items-center`}>
+          <div className={`rounded-[28px] p-6 sm:p-8 ${(SVC[(s.svc as Svc) || 'move'] || SVC.move).tint} flex flex-col sm:flex-row gap-6 sm:items-center`}>
             <Avatar initials={s.initials} svc={s.svc} size={96} />
             <div>
               <Tag svc={s.svc}>{s.role}</Tag>
@@ -278,7 +286,7 @@ export function SpecialistProfile() {
                 <Card className="p-6">
                   <p className="leading-7 max-w-2xl">{s.about}</p>
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {s.focus.map((f) => (
+                    {parseFocusTags(s.focus).map((f: string) => (
                       <span key={f} className="rounded-full bg-paper border border-line px-3 h-8 inline-flex items-center text-[14px] font-semibold">{f}</span>
                     ))}
                   </div>
@@ -342,7 +350,7 @@ export function SpecialistProfile() {
       <div className="lg:hidden fixed bottom-16 inset-x-0 z-20 bg-white border-t border-line px-5 py-3 flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[13px] text-ink-2">Next free slot</p>
-          <p className="font-bold truncate">{slotLabel(slots[0])}</p>
+          <p className="font-bold truncate">{formattedSlots[0]?.label || 'No slots available'}</p>
         </div>
         <Btn onClick={() => nav(`/app/specialists/${s.id}/book?slot=0`)}>Book a session</Btn>
       </div>
