@@ -1,0 +1,81 @@
+{
+  "project": "Nutrition Project / Rebound Fitness App",
+  "version": "1.0.0",
+  "default_user": {
+    "name": "ZiadMD",
+    "email": "ziadmohamedgamal25@gmail.com"
+  },
+  "figma_bridge": {
+    "files": [
+      {
+        "name": "Design-Rebound-Fitness-App",
+        "url": "https://www.figma.com/make/bKc4BA2Frn5J4Stp2BRrlN/Design-Rebound-Fitness-App",
+        "file_key": "bKc4BA2Frn5J4Stp2BRrlN"
+      },
+      {
+        "name": "Nutrition-project",
+        "url": "https://www.figma.com/design/S3TzgaLauHHUuOG3mjkPa3/Nutrition-project?node-id=81-5&p=f&t=zyrOKnaZlvxitami-0",
+        "file_key": "S3TzgaLauHHUuOG3mjkPa3",
+        "node_id": "81-5"
+      }
+    ],
+    "lead_agent": "ali-raslan"
+  },
+  "agents": [
+    {
+      "id": "ali-raslan",
+      "name": "ALI Raslan",
+      "role": "UI/UX Designer & Figma Bridge",
+      "domain": "ui_ux",
+      "github_username": "aliraslan",
+      "github_email": "aliraslan@users.noreply.github.com",
+      "is_email_placeholder": true,
+      "can_modify_local_files": false,
+      "figma_bridge_enabled": true
+    },
+    {
+      "id": "mohamed-mahmoud",
+      "name": "Mohamed Mahmoud",
+      "role": "Backend Developer & AI",
+      "domain": "backend_ai",
+      "github_username": "mohamed1102005",
+      "github_email": "m7md1102005@gmail.com",
+      "is_email_placeholder": false,
+      "can_modify_local_files": true,
+      "figma_bridge_enabled": false
+    },
+    {
+      "id": "mohamed-ashraf",
+      "name": "Mohamed Ashraf",
+      "role": "Frontend Developer",
+      "domain": "frontend",
+      "github_username": "mohamedashraff8",
+      "github_email": "mohamedashraff8@users.noreply.github.com",
+      "is_email_placeholder": true,
+      "can_modify_local_files": true,
+      "figma_bridge_enabled": false
+    },
+    {
+      "id": "omar-mohamed",
+      "name": "Omar Mohamed",
+      "role": "Backend Developer",
+      "domain": "backend",
+      "github_username": "om429810-gif",
+      "github_email": "om429810-gif@users.noreply.github.com",
+      "is_email_placeholder": true,
+      "can_modify_local_files": true,
+      "figma_bridge_enabled": false
+    },
+    {
+      "id": "omar-khaled",
+      "name": "Omar Khaled",
+      "role": "Frontend Developer",
+      "domain": "frontend",
+      "github_username": "omarkhaledd22222-del",
+      "github_email": "omarkhaledd22222-del@users.noreply.github.com",
+      "is_email_placeholder": true,
+      "can_modify_local_files": true,
+      "figma_bridge_enabled": false
+    }
+  ]
+}
