@@ -114,7 +114,25 @@ export const api = {
     return data
   },
 
-  async register(body: { name: string; email: string; password: string; role?: string; type?: string; credentials?: string }) {
+  async register(body: {
+    name: string
+    email: string
+    password: string
+    role?: string
+    type?: string
+    credentials?: string
+    city?: string
+    bio?: string
+    rateEgp?: number
+    yearsExperience?: number
+    languages?: string
+    focusTags?: string | string[]
+    nationalId?: string
+    syndicateId?: string
+    credentialDoc?: string
+    documents?: { name: string; size?: string; type?: string; url?: string }[]
+    packages?: { name: string; description?: string; sessionsCount: number; priceEgp: number }[]
+  }) {
     const data = await apiFetch<{ token: string; user: any }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(body),

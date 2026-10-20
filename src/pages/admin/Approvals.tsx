@@ -4,7 +4,22 @@ import { Avatar, Btn, Card, Dialog, EmptyState, Field, Gate, inputCls, PageHead,
 import { api } from '../../api'
 
 type Svc = 'move' | 'eat' | 'recover'
-type A = { id: number; name: string; initials: string; svc: Svc; role: string; city: string; years: number; applied: string; docs: [string, string][]; outcome?: 'Approved' | 'Rejected'; reason?: string }
+type A = {
+  id: number
+  name: string
+  initials: string
+  svc: Svc
+  role: string
+  city: string
+  years: number
+  applied: string
+  docs: [string, string][]
+  outcome?: 'Approved' | 'Rejected'
+  reason?: string
+  nationalId?: string
+  syndicateId?: string
+  rateEgp?: number
+}
 
 const seed: A[] = [
   { id: 1, name: 'Dr. Yasmin Farouk', initials: 'YF', svc: 'recover', role: 'Physical therapist', city: 'Cairo', years: 8, applied: '12 Oct', docs: [['Syndicate licence', 'PDF, 1.2 MB'], ['Degree certificate', 'PDF, 0.8 MB'], ['National ID', 'JPG, 0.4 MB']] },
@@ -55,8 +70,15 @@ export default function Approvals() {
             city: s.city || 'Cairo',
             years: s.yearsExperience || s.years_experience || 5,
             applied: s.appliedAt ? new Date(s.appliedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Recently',
-            docs: s.credentialDoc ? [[s.credentialDoc, 'PDF, 1.2 MB']] : [['Syndicate licence', 'PDF, 1.2 MB'], ['Degree certificate', 'PDF, 0.8 MB']],
+            docs: (Array.isArray(s.docs) && s.docs.length > 0)
+              ? s.docs
+              : (s.credentialDoc
+                ? [[s.credentialDoc, 'PDF, 1.2 MB']]
+                : [['Syndicate licence', 'PDF, 1.2 MB'], ['Degree certificate', 'PDF, 0.8 MB'], ['National ID', 'JPG, 0.4 MB']]),
             outcome: s.approvalStatus === 'approved' ? 'Approved' : s.approvalStatus === 'rejected' ? 'Rejected' : undefined,
+            nationalId: s.nationalId,
+            syndicateId: s.syndicateId,
+            rateEgp: s.rateEgp,
           }))
           setRows(mapped)
         }
@@ -128,7 +150,14 @@ export default function Approvals() {
                     <Avatar initials={a.initials} svc={a.svc} />
                     <div className="flex-1 min-w-[200px]">
                       <p className="font-bold text-[18px]">{a.name}</p>
-                      <p className="text-[14px] text-ink-2">{a.city} · {a.years} years · applied {a.applied}</p>
+                      <p className="text-[14px] text-ink-2">
+                        {a.city} · {a.years} years experience · applied {a.applied} {a.rateEgp ? `· ${a.rateEgp} EGP/session` : ''}
+                      </p>
+                      {(a.nationalId || a.syndicateId) && (
+                        <p className="text-[12px] text-ink-2 font-mono mt-0.5">
+                          {a.nationalId ? `ID: ${a.nationalId}` : ''} {a.nationalId && a.syndicateId ? '· ' : ''} {a.syndicateId ? `Syndicate: ${a.syndicateId}` : ''}
+                        </p>
+                      )}
                     </div>
                     <Tag svc={a.svc}>{a.role}</Tag>
                   </div>
