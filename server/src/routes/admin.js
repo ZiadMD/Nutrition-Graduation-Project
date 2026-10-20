@@ -337,6 +337,9 @@ router.get('/specialists', (req, res) => {
       s.sessions_completed,
       s.approval_status,
       s.credential_doc,
+      s.national_id,
+      s.syndicate_id,
+      s.documents,
       u.created_at AS applied_at
     FROM specialists s
     JOIN users u ON u.id = s.user_id
@@ -376,12 +379,27 @@ router.get('/specialists', (req, res) => {
     sessionsCompleted: s.sessions_completed,
     approvalStatus: s.approval_status,
     applied: s.applied_at,
-    docs: s.credential_doc
-      ? [[s.credential_doc, 'Application document']]
-      : [
-          ['Syndicate licence', 'PDF, 1.2 MB'],
-          ['Degree certificate', 'PDF, 0.8 MB'],
-        ],
+    nationalId: s.national_id,
+    syndicateId: s.syndicate_id,
+    docs: (() => {
+      if (s.documents) {
+        try {
+          const parsed = JSON.parse(s.documents)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.map((d) => [d.name, d.size || 'PDF, 1.2 MB'])
+          }
+        } catch {
+          // ignore
+        }
+      }
+      return s.credential_doc
+        ? [[s.credential_doc, 'Application document']]
+        : [
+            ['Syndicate licence', 'PDF, 1.2 MB'],
+            ['Degree certificate', 'PDF, 0.8 MB'],
+            ['National ID', 'JPG, 0.4 MB'],
+          ]
+    })(),
   }))
 
   res.json({

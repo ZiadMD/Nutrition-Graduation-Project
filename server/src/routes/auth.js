@@ -17,6 +17,20 @@ const router = Router()
 
 // ── Validation schemas ───────────────────────────────────────────────────────
 
+const documentSchema = z.object({
+  name: z.string().trim().min(1),
+  size: z.string().trim().optional(),
+  type: z.string().trim().optional(),
+  url: z.string().trim().optional(),
+})
+
+const packageSchema = z.object({
+  name: z.string().trim().min(1),
+  description: z.string().trim().optional(),
+  sessionsCount: z.number().int().min(1),
+  priceEgp: z.number().int().nonnegative(),
+})
+
 const registerSchema = z.object({
   name: z.string().trim().min(1, 'Name is required.'),
   email: z.string().trim().email('Valid email address required.'),
@@ -28,6 +42,14 @@ const registerSchema = z.object({
   city: z.string().trim().optional(),
   bio: z.string().trim().optional(),
   rateEgp: z.number().int().nonnegative().optional(),
+  yearsExperience: z.number().int().nonnegative().optional(),
+  languages: z.string().trim().optional(),
+  focusTags: z.union([z.string().trim(), z.array(z.string().trim())]).optional(),
+  nationalId: z.string().trim().optional(),
+  syndicateId: z.string().trim().optional(),
+  credentialDoc: z.string().trim().optional(),
+  documents: z.union([z.string().trim(), z.array(documentSchema)]).optional(),
+  packages: z.array(packageSchema).optional(),
 })
 
 const loginSchema = z.object({
@@ -51,13 +73,29 @@ function buildUserPayload(user) {
     const profile = db.prepare('SELECT onboarding_completed FROM client_profiles WHERE user_id = ?').get(user.id)
     result.onboardingCompleted = profile ? Boolean(profile.onboarding_completed) : false
   } else if (user.role === 'specialist') {
-    const specialist = db.prepare('SELECT type, approval_status, photo_url, city, rate_egp FROM specialists WHERE user_id = ?').get(user.id)
+    const specialist = db.prepare(
+      `SELECT type, approval_status, photo_url, city, rate_egp, credentials, bio,
+              focus_tags, years_experience, languages, national_id, syndicate_id, documents
+       FROM specialists WHERE user_id = ?`
+    ).get(user.id)
     if (specialist) {
       result.type = specialist.type
       result.approvalStatus = specialist.approval_status
       result.photoUrl = specialist.photo_url
       result.city = specialist.city
       result.rateEgp = specialist.rate_egp
+      result.credentials = specialist.credentials
+      result.bio = specialist.bio
+      result.focusTags = specialist.focus_tags ? specialist.focus_tags.split(',').map((t) => t.trim()) : []
+      result.yearsExperience = specialist.years_experience
+      result.languages = specialist.languages
+      result.nationalId = specialist.national_id
+      result.syndicateId = specialist.syndicate_id
+      try {
+        result.documents = specialist.documents ? JSON.parse(specialist.documents) : []
+      } catch {
+        result.documents = []
+      }
     }
   }
 
@@ -77,7 +115,25 @@ function signToken(userId, role) {
  * Specialists require type and credentials, and start with approval_status = 'pending'.
  */
 router.post('/register', validate(registerSchema), (req, res) => {
-  const { name, email, password, role, type, credentials, city, bio, rateEgp } = req.body
+  const {
+    name,
+    email,
+    password,
+    role,
+    type,
+    credentials,
+    city,
+    bio,
+    rateEgp,
+    yearsExperience,
+    languages,
+    focusTags,
+    nationalId,
+    syndicateId,
+    credentialDoc,
+    documents,
+    packages,
+  } = req.body
 
   // Check if email already in use (case-insensitive)
   const existing = db.prepare('SELECT id FROM users WHERE email = ? COLLATE NOCASE').get(email)
@@ -95,7 +151,7 @@ router.post('/register', validate(registerSchema), (req, res) => {
   if (role === 'specialist') {
     const fields = {}
     if (!type) fields.type = 'Specialist type is required (trainer, nutritionist, physical_therapist).'
-    if (!credentials) fields.credentials = 'Credentials are required for specialist registration.'
+    if (!credentials) fields.credentials = 'Credentials or qualifications are required for specialist registration.'
     if (Object.keys(fields).length > 0) {
       return res.status(400).json({
         error: { code: 'VALIDATION_ERROR', message: 'Missing specialist fields.', fields },
@@ -116,10 +172,45 @@ router.post('/register', validate(registerSchema), (req, res) => {
     if (role === 'client') {
       db.prepare('INSERT INTO client_profiles (user_id) VALUES (?)').run(userId)
     } else if (role === 'specialist') {
+      const normalizedFocusTags = Array.isArray(focusTags)
+        ? focusTags.join(',')
+        : (focusTags || null)
+      const docsJson = documents
+        ? (typeof documents === 'string' ? documents : JSON.stringify(documents))
+        : null
+      const primaryDoc = credentialDoc || (Array.isArray(documents) && documents[0]?.name ? documents[0].name : null)
+
       db.prepare(
-        `INSERT INTO specialists (user_id, type, credentials, bio, city, rate_egp, approval_status)
-         VALUES (?, ?, ?, ?, ?, ?, 'pending')`
-      ).run(userId, type, credentials, bio || null, city || null, rateEgp || 0)
+        `INSERT INTO specialists (
+          user_id, type, credentials, bio, focus_tags, city,
+          years_experience, languages, rate_egp, approval_status,
+          credential_doc, national_id, syndicate_id, documents
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`
+      ).run(
+        userId,
+        type,
+        credentials,
+        bio || null,
+        normalizedFocusTags,
+        city || 'Cairo',
+        yearsExperience || 0,
+        languages || 'Arabic,English',
+        rateEgp || 0,
+        primaryDoc,
+        nationalId || null,
+        syndicateId || null,
+        docsJson
+      )
+
+      if (Array.isArray(packages) && packages.length > 0) {
+        const insertPkg = db.prepare(
+          `INSERT INTO specialist_packages (specialist_id, name, description, sessions_count, price_egp)
+           VALUES (?, ?, ?, ?, ?)`
+        )
+        for (const pkg of packages) {
+          insertPkg.run(userId, pkg.name, pkg.description || null, pkg.sessionsCount, pkg.priceEgp)
+        }
+      }
     }
 
     return db.prepare('SELECT * FROM users WHERE id = ?').get(userId)

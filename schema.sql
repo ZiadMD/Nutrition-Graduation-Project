@@ -71,7 +71,10 @@ CREATE TABLE specialists (
   rate_egp           INTEGER NOT NULL CHECK (rate_egp >= 0),   -- price per session
   sessions_completed INTEGER NOT NULL DEFAULT 0,
   approval_status    TEXT NOT NULL DEFAULT 'pending' CHECK (approval_status IN ('pending', 'approved', 'rejected')),
-  credential_doc     TEXT                    -- file name only (demo, no real upload)
+  credential_doc     TEXT,                   -- file name only (demo, no real upload)
+  national_id        TEXT,                   -- Egyptian National ID or Passport Number
+  syndicate_id       TEXT,                   -- Medical / Syndicate practice license registration ID
+  documents          TEXT                    -- JSON array of legal paper attachments
 );
 
 CREATE TABLE specialist_packages (
