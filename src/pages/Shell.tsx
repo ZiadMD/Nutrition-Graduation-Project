@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate, Link, useOutletContext } from 'react-router'
-import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard } from 'lucide-react'
+import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard, Clock } from 'lucide-react'
 import { Btn, Card, EmptyState, Wordmark } from '../ui'
+import WaitingForApproval from './specialist/WaitingForApproval'
 
 import { RoleOnly, type Role, type RoleContextType } from '@/components/auth/RoleOnly'
 export { RoleOnly, type Role }
@@ -105,8 +106,17 @@ export default function Shell() {
   const [moreOpen, setMore] = useState(false)
   const loc = useLocation()
   const go = useNavigate()
-  const items = navs[role]
-  const title = allNav.find((n) => loc.pathname.startsWith(n.to))?.label ?? 'Rebound'
+  const isSpecialistPending =
+    role === 'Specialist' &&
+    currentUser?.role === 'specialist' &&
+    currentUser?.approvalStatus !== 'approved'
+
+  const items = isSpecialistPending
+    ? [{ to: '/app/today', label: 'Approval Status', Icon: Clock }]
+    : navs[role]
+  const title = isSpecialistPending
+    ? 'Specialist Verification'
+    : (allNav.find((n) => loc.pathname.startsWith(n.to))?.label ?? 'Rebound')
   const home = (r: Role) => {
     if (r === 'Admin') return '/app/overview'
     if (r === 'Finance') return '/app/finance/overview'
@@ -277,7 +287,17 @@ export default function Shell() {
           </div>
         </header>
         <main className="px-5 lg:px-10 py-8 pb-12 max-w-[1200px]">
-          <Outlet context={{ role, setRole: changeRole }} />
+          {isSpecialistPending ? (
+            <WaitingForApproval
+              user={currentUser}
+              onApproved={async () => {
+                const refreshed = await api.getMe()
+                setCurrentUser(refreshed)
+              }}
+            />
+          ) : (
+            <Outlet context={{ role, setRole: changeRole }} />
+          )}
         </main>
       </div>
 

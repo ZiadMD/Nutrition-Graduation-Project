@@ -4,11 +4,17 @@ import { CircleCheck, OctagonAlert, TriangleAlert } from 'lucide-react'
 import { Card, PageHead } from '../ui'
 import { useRole } from './Shell'
 import ClientToday from './client/Today'
-import { api } from '../api'
+import { api, getStoredUser } from '../api'
+import WaitingForApproval from './specialist/WaitingForApproval'
 
 const CLIENT_IDS: Record<string, string> = { 'Sara Hassan': 'sara', 'Omar Khaled': 'omar', 'Laila Mostafa': 'laila' }
 
 function SpecialistToday() {
+  const user = getStoredUser()
+  if (user?.role === 'specialist' && user?.approvalStatus && user.approvalStatus !== 'approved') {
+    return <WaitingForApproval user={user} />
+  }
+
   const [loading, setLoading] = useState(true)
   const [bookedSessions, setBookedSessions] = useState<any[]>([])
 
