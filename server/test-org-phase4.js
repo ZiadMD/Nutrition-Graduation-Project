@@ -152,6 +152,7 @@ async function run() {
     assert.strictEqual(membersData.data.members.length, 20, 'Apex must list 20 members')
     const member1InList = membersData.data.members.find((m) => m.id === member1Id)
     assert.ok(member1InList, 'member1 must be present in members list')
+    assert.strictEqual(member1InList.lastActiveAt, undefined, 'lastActiveAt must be removed from GET /api/org/members')
     assert.ok(Array.isArray(member1InList.assignedSpecialists), 'assignedSpecialists must be an array')
     assert.ok(member1InList.assignedSpecialists.length > 0, 'member1 must have active assigned specialists')
     const assignedTarek = member1InList.assignedSpecialists.find((s) => s.specialistId === tarekId)

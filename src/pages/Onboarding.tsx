@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ArrowLeft, ArrowRight, CircleCheck, TriangleAlert, OctagonAlert, Dumbbell, Utensils, HeartPulse, Scale, Flame, Bone, Sparkles } from 'lucide-react'
 import { Btn, Chip, Field, inputCls, SafetyCallout, Wordmark, Card, SVC } from '../ui'
-import { api } from '../api'
+import { api, getStoredUser } from '../api'
 
 const goalMap: Record<string, string> = {
   'Lose fat': 'lose_fat',
@@ -98,6 +98,24 @@ export default function Onboarding() {
   const [food, setFood] = useState({ diet: 'No preference', allergies: [] as string[], meals: '3', dislikes: 'Okra, liver' })
 
   useEffect(() => {
+    const user = getStoredUser()
+    if (user?.role === 'org_admin') {
+      nav('/app/org', { replace: true })
+      return
+    }
+    if (user?.role === 'specialist') {
+      nav('/app/today', { replace: true })
+      return
+    }
+    if (user?.role === 'admin') {
+      nav('/app/overview', { replace: true })
+      return
+    }
+    if (user?.role === 'finance') {
+      nav('/app/finance/overview', { replace: true })
+      return
+    }
+
     api.getProfile().then((res) => {
       if (res?.profile) {
         const p = res.profile

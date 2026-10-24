@@ -119,6 +119,7 @@ export function Today() {
   if (role === 'Client') return <ClientToday />
   if (role === 'Specialist') return <SpecialistToday />
   if (role === 'Finance') return <Navigate to="/app/finance/overview" replace />
+  if (role === 'OrgAdmin') return <Navigate to="/app/org" replace />
   return <Navigate to="/app/overview" replace />
 }
 

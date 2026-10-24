@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate, useLocation, useRouteError, isRouteErrorResponse } from 'react-router'
 import Landing from './pages/Landing'
-import { Login, Signup } from './pages/Auth'
+import { Login, Signup, JoinOrg, RegisterOrg } from './pages/Auth'
 import Onboarding from './pages/Onboarding'
 import Shell, { RoleOnly } from './pages/Shell'
 import { NotFoundState, Btn, Card } from './ui'
@@ -14,6 +14,7 @@ import Approvals from './pages/admin/Approvals'
 import AdminSupport from './pages/admin/Support'
 import { Today } from './pages/AppPages'
 import { SpecialistsList, SpecialistProfile } from './pages/client/Specialists'
+import MySpecialists from './pages/client/MySpecialists'
 import Booking from './pages/client/Booking'
 import Bookings from './pages/client/Bookings'
 import Checkout from './pages/client/Checkout'
@@ -27,7 +28,7 @@ import FinancePayouts from './pages/finance/Payouts'
 import FinanceSubscriptions from './pages/finance/Subscriptions'
 
 const NotFound = () => <NotFoundState full />
-const only = (role: 'Client' | 'Specialist' | 'Admin' | 'Finance', C: () => React.JSX.Element) => () => <RoleOnly role={role}><C /></RoleOnly>
+const only = (role: 'Client' | 'Specialist' | 'Admin' | 'Finance' | 'OrgAdmin', C: () => React.JSX.Element) => () => <RoleOnly role={role}><C /></RoleOnly>
 
 export function RouteErrorBoundary() {
   const error = useRouteError()
@@ -67,6 +68,8 @@ export const router = createBrowserRouter([
   { path: '/', Component: Landing },
   { path: '/login', Component: Login },
   { path: '/signup', Component: Signup },
+  { path: '/join', Component: JoinOrg },
+  { path: '/register-org', Component: RegisterOrg },
   {
     path: '/onboarding',
     element: (
@@ -87,6 +90,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="today" replace /> },
       { path: 'today', Component: Today },
       { path: 'specialists', Component: only('Client', SpecialistsList) },
+      { path: 'my-specialists', Component: only('Client', MySpecialists) },
       { path: 'specialists/:id', Component: only('Client', SpecialistProfile) },
       { path: 'specialists/:id/book', Component: only('Client', Booking) },
       { path: 'bookings', Component: only('Client', Bookings) },
@@ -106,6 +110,10 @@ export const router = createBrowserRouter([
       { path: 'finance/transactions', Component: only('Finance', FinanceTransactions) },
       { path: 'finance/payouts', Component: only('Finance', FinancePayouts) },
       { path: 'finance/subscriptions', Component: only('Finance', FinanceSubscriptions) },
+      // Org admin portal routes (placeholders for 5A, fully implemented in 5B)
+      { path: 'org', Component: only('OrgAdmin', () => <div className="p-8"><h1 className="text-2xl font-bold">Organization Dashboard</h1><p className="text-ink-2 mt-2">Org admin portal will be populated in Phase 5B.</p></div>) },
+      { path: 'org/members', Component: only('OrgAdmin', () => <div className="p-8"><h1 className="text-2xl font-bold">Organization Members</h1><p className="text-ink-2 mt-2">Org member management will be populated in Phase 5B.</p></div>) },
+      { path: 'org/specialists', Component: only('OrgAdmin', () => <div className="p-8"><h1 className="text-2xl font-bold">Organization Specialists</h1><p className="text-ink-2 mt-2">Org specialist roster will be populated in Phase 5B.</p></div>) },
     ],
   },
   {

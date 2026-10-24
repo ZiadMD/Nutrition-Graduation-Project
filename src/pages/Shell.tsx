@@ -13,15 +13,25 @@ export { RoleOnly, type Role }
 type Ctx = RoleContextType
 export const useRole = () => useOutletContext<Ctx>().role
 
-const getNavItems = (t: (key: string) => string) => ({
-  Client: [
-    { to: '/app/today', label: t('nav.today'), Icon: House },
-    { to: '/app/specialists', label: t('nav.specialists'), Icon: Users },
-    { to: '/app/bookings', label: t('nav.bookings'), Icon: CalendarDays },
-    { to: '/app/plan', label: t('nav.plan'), Icon: ClipboardList },
-    { to: '/app/progress', label: t('nav.progress'), Icon: LineChart },
-    { to: '/app/ai-plan', label: t('nav.ai_plan'), Icon: Sparkles },
-  ],
+const getNavItems = (t: (key: string) => string, isOrgMember = false) => ({
+  Client: isOrgMember
+    ? [
+        { to: '/app/today', label: t('nav.today'), Icon: House },
+        { to: '/app/my-specialists', label: t('nav.specialists') || 'Specialists', Icon: Users },
+        { to: '/app/bookings', label: t('nav.bookings'), Icon: CalendarDays },
+        { to: '/app/plan', label: t('nav.plan'), Icon: ClipboardList },
+        { to: '/app/progress', label: t('nav.progress'), Icon: LineChart },
+        { to: '/app/ai-plan', label: t('nav.ai_plan'), Icon: Sparkles },
+      ]
+    : [
+        { to: '/app/today', label: t('nav.today'), Icon: House },
+        { to: '/app/specialists', label: t('nav.specialists'), Icon: Users },
+        { to: '/app/my-specialists', label: 'My specialists', Icon: Contact },
+        { to: '/app/bookings', label: t('nav.bookings'), Icon: CalendarDays },
+        { to: '/app/plan', label: t('nav.plan'), Icon: ClipboardList },
+        { to: '/app/progress', label: t('nav.progress'), Icon: LineChart },
+        { to: '/app/ai-plan', label: t('nav.ai_plan'), Icon: Sparkles },
+      ],
   Specialist: [
     { to: '/app/today', label: t('nav.today'), Icon: House },
     { to: '/app/clients', label: t('nav.clients'), Icon: Contact },
@@ -39,25 +49,51 @@ const getNavItems = (t: (key: string) => string) => ({
     { to: '/app/finance/payouts', label: t('nav.payouts'), Icon: Coins },
     { to: '/app/finance/subscriptions', label: t('nav.subscriptions'), Icon: CreditCard },
   ],
+  OrgAdmin: [
+    { to: '/app/org', label: 'Dashboard', Icon: LayoutDashboard },
+    { to: '/app/org/members', label: 'Members', Icon: Users },
+    { to: '/app/org/specialists', label: 'Specialists', Icon: Contact },
+  ],
 })
 
 import { api, IS_DEMO_MODE, getStoredUser, getToken, removeToken } from '../api'
 
-function RoleSwitch({ role, setRole }: { role: Role; setRole: (r: Role) => void }) {
+type DemoAccountKey = 'Client' | 'OrgMember' | 'Specialist' | 'Admin' | 'Finance' | 'OrgAdmin'
+
+const DEMO_ACCOUNTS: Record<DemoAccountKey, { label: string; email: string; pass: string; role: Role }> = {
+  Client: { label: 'Client (Sara)', email: 'sara@demo.com', pass: 'demo1234', role: 'Client' },
+  OrgMember: { label: 'Org member', email: 'member1@apex.com', pass: 'demo1234', role: 'Client' },
+  Specialist: { label: 'Specialist', email: 'mona@demo.com', pass: 'demo1234', role: 'Specialist' },
+  Admin: { label: 'Admin', email: 'admin@demo.com', pass: 'demo1234', role: 'Admin' },
+  Finance: { label: 'Finance', email: 'finance@demo.com', pass: 'demo1234', role: 'Finance' },
+  OrgAdmin: { label: 'Org admin', email: 'admin@apex.com', pass: 'demo1234', role: 'OrgAdmin' },
+}
+
+function RoleSwitch({
+  activeKey,
+  onSelect,
+}: {
+  activeKey: DemoAccountKey
+  onSelect: (key: DemoAccountKey) => void
+}) {
   if (!IS_DEMO_MODE) return null
   return (
     <div>
       <p className="label text-ink-2 uppercase mb-2">Demo role</p>
       <div role="radiogroup" aria-label="Demo role" className="grid grid-cols-2 gap-1 p-1 bg-paper border border-line rounded-xl">
-        {(['Client', 'Specialist', 'Admin', 'Finance'] as Role[]).map((r) => (
+        {(Object.keys(DEMO_ACCOUNTS) as DemoAccountKey[]).map((k) => (
           <button
-            key={r}
+            key={k}
+            type="button"
             role="radio"
-            aria-checked={role === r}
-            onClick={() => setRole(r)}
-            className={`min-h-10 rounded-lg text-[12px] font-bold cursor-pointer transition ${role === r ? 'bg-ink text-white' : 'hover:bg-ink/5 text-ink'}`}
+            aria-checked={activeKey === k}
+            onClick={() => onSelect(k)}
+            className={`min-h-10 px-2 rounded-lg text-[11px] font-bold cursor-pointer transition truncate ${
+              activeKey === k ? 'bg-ink text-white' : 'hover:bg-ink/5 text-ink'
+            }`}
+            title={DEMO_ACCOUNTS[k].label}
           >
-            {r}
+            {DEMO_ACCOUNTS[k].label}
           </button>
         ))}
       </div>
@@ -87,6 +123,7 @@ function Pop({ open, onClose, children, className = '' }: { open: boolean; onClo
 }
 
 const roleFromUser = (u: any): Role => {
+  if (u?.role === 'org_admin') return 'OrgAdmin'
   if (u?.role === 'admin') return 'Admin'
   if (u?.role === 'finance') return 'Finance'
   if (u?.role === 'specialist') return 'Specialist'
@@ -98,15 +135,23 @@ const DEMO_USERS: Record<Role, { id: number; name: string; email: string; role: 
   Specialist: { id: 2, name: 'Dr. Mona Fathy', email: 'mona@demo.com', role: 'specialist' },
   Admin: { id: 3, name: 'Admin team', email: 'admin@demo.com', role: 'admin' },
   Finance: { id: 4, name: 'Tamer Fahmy', email: 'finance@demo.com', role: 'finance' },
+  OrgAdmin: { id: 10, name: 'Apex Admin', email: 'admin@apex.com', role: 'org_admin' },
 }
 
 export default function Shell() {
   const { t, isRtl } = useLanguage()
-  const navs = getNavItems(t)
-  const allNav = [...navs.Client, ...navs.Specialist.slice(1), ...navs.Admin, ...navs.Finance]
-
   const [currentUser, setCurrentUser] = useState<any>(getStoredUser())
   const [role, setRole] = useState<Role>(roleFromUser(getStoredUser()))
+  const isOrgMember = Boolean(currentUser?.organizationId || currentUser?.organization)
+  const navs = getNavItems(t, isOrgMember)
+  const allNav = [
+    ...navs.Client,
+    ...navs.Specialist.slice(1),
+    ...navs.Admin,
+    ...navs.Finance,
+    ...navs.OrgAdmin,
+  ]
+
   const [bell, setBell] = useState(false)
   const [menu, setMenu] = useState(false)
   const [moreOpen, setMore] = useState(false)
@@ -120,35 +165,53 @@ export default function Shell() {
 
   const items = isSpecialistPending
     ? [{ to: '/app/today', label: 'Approval Status', Icon: Clock }]
-    : navs[role]
+    : navs[role] || navs.Client
   const title = isSpecialistPending
     ? 'Specialist Verification'
     : (allNav.find((n) => loc.pathname.startsWith(n.to))?.label ?? 'Rebound')
   const home = (r: Role) => {
+    if (r === 'OrgAdmin') return '/app/org'
     if (r === 'Admin') return '/app/overview'
     if (r === 'Finance') return '/app/finance/overview'
     return '/app/today'
   }
 
-  const changeRole = async (r: Role) => {
+  // Derive demo account key
+  const activeDemoKey: DemoAccountKey =
+    currentUser?.email === 'admin@apex.com'
+      ? 'OrgAdmin'
+      : currentUser?.email === 'member1@apex.com'
+      ? 'OrgMember'
+      : role === 'Admin'
+      ? 'Admin'
+      : role === 'Finance'
+      ? 'Finance'
+      : role === 'Specialist'
+      ? 'Specialist'
+      : 'Client'
+
+  const changeRoleByKey = async (key: DemoAccountKey) => {
+    const acc = DEMO_ACCOUNTS[key]
     if (IS_DEMO_MODE) {
-      const creds: Record<Role, { email: string; pass: string }> = {
-        Client: { email: 'sara@demo.com', pass: 'demo1234' },
-        Specialist: { email: 'mona@demo.com', pass: 'demo1234' },
-        Admin: { email: 'admin@demo.com', pass: 'demo1234' },
-        Finance: { email: 'finance@demo.com', pass: 'demo1234' },
-      }
       try {
-        const res = await api.login(creds[r].email, creds[r].pass)
+        const res = await api.login(acc.email, acc.pass)
         setCurrentUser(res.user)
       } catch {
-        setCurrentUser(DEMO_USERS[r])
+        setCurrentUser(DEMO_USERS[acc.role])
       }
     } else {
-      setCurrentUser(DEMO_USERS[r])
+      setCurrentUser(DEMO_USERS[acc.role])
     }
-    setRole(r)
-    go(home(r))
+    setRole(acc.role)
+    go(home(acc.role))
+  }
+
+  const changeRole = async (r: Role) => {
+    if (r === 'OrgAdmin') {
+      await changeRoleByKey('OrgAdmin')
+    } else {
+      await changeRoleByKey(r as DemoAccountKey)
+    }
   }
 
   useEffect(() => {
@@ -213,7 +276,7 @@ export default function Shell() {
           ))}
         </nav>
         <div className="mt-auto">
-          <RoleSwitch role={role} setRole={changeRole} />
+          <RoleSwitch activeKey={activeDemoKey} onSelect={changeRoleByKey} />
         </div>
       </aside>
 
@@ -230,6 +293,12 @@ export default function Shell() {
             <p className="h-display text-[24px] lg:text-[30px]" role="heading" aria-level={1}>
               {title}
             </p>
+            {currentUser?.organization?.name && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sand/80 border border-line text-[12px] font-bold text-ink">
+                <Building2 size={13} className="text-move" aria-hidden />
+                {currentUser.organization.name}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 relative">
             <LanguageToggle />
@@ -385,7 +454,7 @@ export default function Shell() {
             </div>
 
             <div className="mt-auto pt-6">
-              <RoleSwitch role={role} setRole={changeRole} />
+              <RoleSwitch activeKey={activeDemoKey} onSelect={changeRoleByKey} />
               <button className="mt-4 w-full min-h-12 px-4 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer" onClick={() => { api.logout(); go('/login') }}>
                 <LogOut size={20} aria-hidden /> {t('nav.logout')}
               </button>

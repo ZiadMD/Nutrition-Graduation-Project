@@ -483,34 +483,176 @@ const plans = [
 ]
 
 function Pricing() {
+  const [tab, setTab] = useState<'individuals' | 'organizations'>('individuals')
+
   return (
     <section id="pricing" className="bg-white border-y border-line">
       <div className={`${wrap} py-20 lg:py-28`}>
-        <h2 className="h-display text-[40px]">Simple monthly pricing</h2>
-        <p className="text-ink-2 mt-3">Cancel any time. Prices in Egyptian pounds.</p>
-        <div className="mt-10 grid md:grid-cols-3 gap-5 items-stretch">
-          {plans.map((p) => (
-            <div key={p.name} className={`rounded-2xl bg-white p-8 flex flex-col relative ${p.best ? 'border-[3px] border-ink' : 'border border-line'}`}>
-              {p.best && <span className="absolute -top-4 left-6 bg-ink text-white rounded-full px-4 h-8 inline-flex items-center label">Best for rehab</span>}
-              <h3 className="h-display text-[24px]">{p.name}</h3>
-              <p className="text-ink-2 mt-1">{p.blurb}</p>
-              <p className="mt-6 flex items-baseline gap-2">
-                <span className="num text-[48px] leading-none">{p.price}</span>
-                <span className="font-semibold">EGP / month</span>
-              </p>
-              <ul className="mt-6 space-y-3 mb-8">
-                {p.feats.map((f) => (
-                  <li key={f} className="flex gap-3 text-[15px]">
-                    <Check size={20} strokeWidth={3} className="shrink-0 mt-0.5 text-ok" aria-hidden /> {f}
-                  </li>
-                ))}
-              </ul>
-              <Btn variant={p.best ? 'primary' : 'secondary'} to="/signup" className="mt-auto w-full">
-                Choose {p.name}
-              </Btn>
-            </div>
-          ))}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <h2 className="h-display text-[40px]">Transparent, flexible pricing</h2>
+            <p className="text-ink-2 mt-2">
+              For individuals seeking personal health guidance or organizations sponsoring their teams.
+            </p>
+          </div>
+          {/* Individuals / Organizations Toggle */}
+          <div className="inline-flex p-1 rounded-xl bg-paper border border-line self-start md:self-auto">
+            <button
+              type="button"
+              onClick={() => setTab('individuals')}
+              className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all ${
+                tab === 'individuals'
+                  ? 'bg-ink text-white shadow-sm'
+                  : 'text-ink-2 hover:text-ink'
+              }`}
+            >
+              For individuals
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('organizations')}
+              className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all ${
+                tab === 'organizations'
+                  ? 'bg-ink text-white shadow-sm'
+                  : 'text-ink-2 hover:text-ink'
+              }`}
+            >
+              For organizations
+            </button>
+          </div>
         </div>
+
+        {tab === 'individuals' ? (
+          <div className="grid md:grid-cols-3 gap-5 items-stretch">
+            {plans.map((p) => (
+              <div
+                key={p.name}
+                className={`rounded-2xl bg-white p-8 flex flex-col relative ${
+                  p.best ? 'border-[3px] border-ink' : 'border border-line'
+                }`}
+              >
+                {p.best && (
+                  <span className="absolute -top-4 left-6 bg-ink text-white rounded-full px-4 h-8 inline-flex items-center label">
+                    Best for rehab
+                  </span>
+                )}
+                <h3 className="h-display text-[24px]">{p.name}</h3>
+                <p className="text-ink-2 mt-1">{p.blurb}</p>
+                <p className="mt-6 flex items-baseline gap-2">
+                  <span className="num text-[48px] leading-none">{p.price}</span>
+                  <span className="font-semibold">EGP / month</span>
+                </p>
+                <ul className="mt-6 space-y-3 mb-8">
+                  {p.feats.map((f) => (
+                    <li key={f} className="flex gap-3 text-[15px]">
+                      <Check size={20} strokeWidth={3} className="shrink-0 mt-0.5 text-ok" aria-hidden />{' '}
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Btn
+                  variant={p.best ? 'primary' : 'secondary'}
+                  to="/signup"
+                  className="mt-auto w-full"
+                >
+                  Choose {p.name}
+                </Btn>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8 items-stretch bg-paper rounded-3xl p-8 lg:p-12 border border-line">
+            <div className="flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-move bg-move-tint px-3 py-1 rounded-full inline-block mb-4">
+                  B2B Wellness & Performance
+                </span>
+                <h3 className="h-display text-[32px] lg:text-[36px]">
+                  Sponsor your team's health
+                </h3>
+                <p className="text-ink-2 mt-3 text-base leading-relaxed">
+                  Bring your own specialists or use ours. Plans scale with your team size, giving employees, athletes, or students dedicated Move, Eat, and Recover support.
+                </p>
+
+                <div className="grid sm:grid-cols-2 gap-4 mt-8">
+                  <div className="p-4 rounded-xl bg-white border border-line">
+                    <strong className="text-ink font-bold text-sm block">Flexible Specialists</strong>
+                    <span className="text-xs text-ink-2 mt-1 block">
+                      Connect your internal trainers and therapists or grant access to platform specialists.
+                    </span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white border border-line">
+                    <strong className="text-ink font-bold text-sm block">Instant Onboarding</strong>
+                    <span className="text-xs text-ink-2 mt-1 block">
+                      One unique invite code. Members join without entering credit cards.
+                    </span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white border border-line">
+                    <strong className="text-ink font-bold text-sm block">Privacy-First Analytics</strong>
+                    <span className="text-xs text-ink-2 mt-1 block">
+                      Track seat utilization and activity aggregates with zero clinical data exposure.
+                    </span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white border border-line">
+                    <strong className="text-ink font-bold text-sm block">Custom Seat Limits</strong>
+                    <span className="text-xs text-ink-2 mt-1 block">
+                      Scale from 5 to 500+ sponsored member seats with predictable terms.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-line flex flex-col sm:flex-row items-center gap-4">
+                <Btn to="/register-org" className="w-full sm:w-auto px-8">
+                  Register your organization <ArrowRight size={18} />
+                </Btn>
+                <Link
+                  to="/join"
+                  className="font-semibold text-ink underline underline-offset-4 text-sm"
+                >
+                  Have an invite code from your team? Join here
+                </Link>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 border border-line flex flex-col justify-between shadow-sm">
+              <div>
+                <span className="label text-ink-2">Annual or Quarterly Sponsoring</span>
+                <p className="mt-4 flex items-baseline gap-2">
+                  <span className="num text-[44px] leading-none">Custom</span>
+                  <span className="text-ink-2 font-medium">per seat / month</span>
+                </p>
+                <p className="text-xs text-ink-2 mt-2">
+                  Invoiced in EGP with dedicated onboarding and specialist assignment support.
+                </p>
+
+                <div className="mt-6 pt-6 border-t border-line space-y-3">
+                  {[
+                    'Your own specialists or platform specialists',
+                    'Invite codes for instant zero-payment onboarding',
+                    'Members skip payment (fully sponsored)',
+                    'Aggregate health dashboard for org admins',
+                    '1 to 500 scalable member seats',
+                  ].map((feat) => (
+                    <div key={feat} className="flex gap-3 text-sm text-ink">
+                      <Check size={18} strokeWidth={3} className="shrink-0 mt-0.5 text-ok" />
+                      <span>{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-line text-center">
+                <p className="text-xs text-ink-2">
+                  Already managing a team?{' '}
+                  <Link to="/login" className="font-bold text-ink underline underline-offset-4">
+                    Log in as Org Admin
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )

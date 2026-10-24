@@ -14,6 +14,7 @@ import {
   Building2,
   DollarSign,
   Plus,
+  Copy,
 } from 'lucide-react'
 import { Btn, Field, PasswordInput, inputCls, Wordmark, SVC, Tag } from '../ui'
 import type { Svc } from '../data'
@@ -89,8 +90,12 @@ export function Login() {
     try {
       const res = await api.login(f.email, f.password)
       const user = res.user
-      if (user.role === 'admin') {
+      if (user.role === 'org_admin') {
+        nav('/app/org')
+      } else if (user.role === 'admin') {
         nav('/app/overview')
+      } else if (user.role === 'finance') {
+        nav('/app/finance/overview')
       } else if (user.role === 'specialist') {
         nav('/app/today')
       } else {
@@ -827,6 +832,18 @@ export function Signup() {
           </Link>
         </p>
         <p>
+          Have an invite code?{' '}
+          <Link to="/join" className="font-bold text-ink underline underline-offset-4">
+            Join your team
+          </Link>
+        </p>
+        <p>
+          Looking to sponsor your team?{' '}
+          <Link to="/register-org" className="font-bold text-ink underline underline-offset-4">
+            Register an organization
+          </Link>
+        </p>
+        <p>
           {specialist ? (
             <Link to="/signup" className="font-bold text-ink underline underline-offset-4">
               Sign up as a client instead
@@ -836,6 +853,433 @@ export function Signup() {
               Join as a specialist
             </Link>
           )}
+        </p>
+      </div>
+    </AuthLayout>
+  )
+}
+
+/**
+ * JoinOrg: Allows users with an organization invite code to register without payment.
+ * Automatically links the user to the organization and logs them in.
+ */
+export function JoinOrg() {
+  const nav = useNavigate()
+  const [f, setF] = useState({
+    inviteCode: '',
+    name: '',
+    email: '',
+    password: '',
+  })
+  const [err, setErr] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(false)
+
+  const validate = () => {
+    const e: Record<string, string> = {}
+    if (!f.inviteCode.trim()) e.inviteCode = 'Enter the 8-character invite code from your organization.'
+    if (f.name.trim().length < 2) e.name = 'Enter your full name.'
+    if (!emailOk(f.email)) e.email = 'Enter a valid email address.'
+    if (f.password.length < 8) e.password = 'Password must be at least 8 characters.'
+    return e
+  }
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    const v = validate()
+    setErr(v)
+    if (Object.keys(v).length > 0) return
+
+    setLoading(true)
+    try {
+      await api.joinOrg({
+        inviteCode: f.inviteCode.trim().toUpperCase(),
+        name: f.name.trim(),
+        email: f.email.trim(),
+        password: f.password,
+      })
+      // Sponsored org member is now registered and logged in; route to onboarding
+      nav('/onboarding')
+    } catch (error: any) {
+      setErr({
+        global: error?.message || 'Failed to join organization. Please verify your invite code.',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <AuthLayout>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="size-10 rounded-xl bg-move-tint text-move flex items-center justify-center">
+          <Building2 size={22} />
+        </div>
+        <span className="text-xs font-bold tracking-wider uppercase bg-sand px-2.5 py-1 rounded-full text-ink">
+          Sponsored Access
+        </span>
+      </div>
+      <h1 className="h-display text-[32px]">Join your organization</h1>
+      <p className="text-ink-2 mt-2">
+        Enter the invite code provided by your company, university, or club to get sponsored wellness access.
+      </p>
+
+      {err.global && (
+        <div className="mt-6 rounded-xl bg-bad-tint p-4 text-[14px] font-medium text-[#a02a2a] border border-[#a02a2a]/20">
+          {err.global}
+        </div>
+      )}
+
+      <form onSubmit={submit} noValidate className="mt-8 space-y-5">
+        <Field
+          label="Organization Invite Code"
+          helper="8-character uppercase code (e.g. APEX2026)"
+          error={err.inviteCode}
+        >
+          {(p) => (
+            <input
+              {...p}
+              type="text"
+              className={`${inputCls} font-mono tracking-wider text-base uppercase`}
+              placeholder="e.g. APEX2026"
+              maxLength={12}
+              value={f.inviteCode}
+              onChange={(e) => setF({ ...f, inviteCode: e.target.value.toUpperCase() })}
+            />
+          )}
+        </Field>
+
+        <Field label="Full name" error={err.name}>
+          {(p) => (
+            <input
+              {...p}
+              type="text"
+              autoComplete="name"
+              className={inputCls}
+              placeholder="e.g. Youssef Nabil"
+              value={f.name}
+              onChange={(e) => setF({ ...f, name: e.target.value })}
+            />
+          )}
+        </Field>
+
+        <Field label="Work / Personal Email" error={err.email}>
+          {(p) => (
+            <input
+              {...p}
+              type="email"
+              autoComplete="email"
+              className={inputCls}
+              placeholder="name@example.com"
+              value={f.email}
+              onChange={(e) => setF({ ...f, email: e.target.value })}
+            />
+          )}
+        </Field>
+
+        <Field label="Create Password" error={err.password}>
+          {(p) => (
+            <PasswordInput
+              {...p}
+              autoComplete="new-password"
+              value={f.password}
+              onChange={(e) => setF({ ...f, password: e.target.value })}
+            />
+          )}
+        </Field>
+
+        <Btn type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Joining organization...' : 'Join with invite code'}
+        </Btn>
+      </form>
+
+      <div className="mt-8 space-y-1 text-ink-2">
+        <p>
+          Already have an account?{' '}
+          <Link to="/login" className="font-bold text-ink underline underline-offset-4">
+            Log in
+          </Link>
+        </p>
+        <p>
+          Individual member without a team code?{' '}
+          <Link to="/signup" className="font-bold text-ink underline underline-offset-4">
+            Individual sign up
+          </Link>
+        </p>
+      </div>
+    </AuthLayout>
+  )
+}
+
+/**
+ * RegisterOrg: Allows creating an organization alongside an org_admin user.
+ * Displays the unique invite code immediately upon registration with copy functionality.
+ */
+export function RegisterOrg() {
+  const [f, setF] = useState({
+    organizationName: '',
+    type: 'company' as 'company' | 'university' | 'gym' | 'other',
+    seatLimit: 50,
+    adminName: '',
+    email: '',
+    password: '',
+  })
+  const [err, setErr] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [createdOrg, setCreatedOrg] = useState<{
+    name: string
+    inviteCode: string
+    seatLimit: number
+  } | null>(null)
+
+  const validate = () => {
+    const e: Record<string, string> = {}
+    if (f.organizationName.trim().length < 2) e.organizationName = 'Enter your organization name.'
+    if (!f.seatLimit || Number(f.seatLimit) < 1 || Number(f.seatLimit) > 500) {
+      e.seatLimit = 'Seat limit must be between 1 and 500.'
+    }
+    if (f.adminName.trim().length < 2) e.adminName = 'Enter the lead administrator name.'
+    if (!emailOk(f.email)) e.email = 'Enter a valid administrator email.'
+    if (f.password.length < 8) e.password = 'Password must be at least 8 characters.'
+    return e
+  }
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    const v = validate()
+    setErr(v)
+    if (Object.keys(v).length > 0) return
+
+    setLoading(true)
+    try {
+      const res = await api.registerOrg({
+        organizationName: f.organizationName.trim(),
+        type: f.type,
+        seatLimit: Number(f.seatLimit),
+        adminName: f.adminName.trim(),
+        email: f.email.trim(),
+        password: f.password,
+      })
+      setCreatedOrg({
+        name: res.organization.name,
+        inviteCode: res.organization.inviteCode,
+        seatLimit: res.organization.seatLimit,
+      })
+    } catch (error: any) {
+      setErr({
+        global: error?.message || 'Failed to register organization. Please try again.',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copyCode = async () => {
+    if (!createdOrg) return
+    try {
+      await navigator.clipboard.writeText(createdOrg.inviteCode)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      // Fallback
+    }
+  }
+
+  // One-time success view displayed immediately after organization creation
+  if (createdOrg) {
+    return (
+      <AuthLayout wide>
+        <div className="text-center py-4">
+          <div className="size-16 rounded-2xl bg-ok/10 text-ok flex items-center justify-center mx-auto mb-4">
+            <Check size={32} strokeWidth={2.5} />
+          </div>
+          <h1 className="h-display text-[32px]">Organization Registered!</h1>
+          <p className="text-ink-2 mt-2 max-w-md mx-auto">
+            <strong>{createdOrg.name}</strong> has been registered with {createdOrg.seatLimit} sponsored member seats.
+          </p>
+
+          <div className="mt-8 p-6 bg-paper rounded-2xl border border-line text-left">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-2 block mb-2">
+              Your Team Invite Code
+            </span>
+            <div className="flex items-center justify-between gap-3 bg-white p-4 rounded-xl border border-line">
+              <span className="font-mono text-2xl font-bold tracking-widest text-ink select-all">
+                {createdOrg.inviteCode}
+              </span>
+              <Btn
+                type="button"
+                variant="secondary"
+                onClick={copyCode}
+                className="gap-2 shrink-0 min-h-10 text-sm"
+              >
+                {copied ? (
+                  <>
+                    <Check size={16} className="text-ok" /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} /> Copy code
+                  </>
+                )}
+              </Btn>
+            </div>
+            <p className="text-xs text-ink-2 mt-3 leading-relaxed">
+              Share this code with your members. They will enter it on the join page to activate their sponsored membership immediately without payment.
+            </p>
+          </div>
+
+          <div className="mt-8">
+            <Btn
+              to="/app/org"
+              className="w-full text-base py-3.5 gap-2"
+            >
+              Continue to organization dashboard <ArrowRight size={18} />
+            </Btn>
+          </div>
+        </div>
+      </AuthLayout>
+    )
+  }
+
+  return (
+    <AuthLayout wide>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="size-10 rounded-xl bg-eat-tint text-eat flex items-center justify-center">
+          <Building2 size={22} />
+        </div>
+        <span className="text-xs font-bold tracking-wider uppercase bg-sand px-2.5 py-1 rounded-full text-ink">
+          B2B Organization Portal
+        </span>
+      </div>
+      <h1 className="h-display text-[32px]">Register your organization</h1>
+      <p className="text-ink-2 mt-2">
+        Equip your team with personalized nutrition, training, and recovery. Bring your own specialists or use ours.
+      </p>
+
+      {err.global && (
+        <div className="mt-6 rounded-xl bg-bad-tint p-4 text-[14px] font-medium text-[#a02a2a] border border-[#a02a2a]/20">
+          {err.global}
+        </div>
+      )}
+
+      <form onSubmit={submit} noValidate className="mt-8 space-y-5">
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label="Organization Name" error={err.organizationName}>
+            {(p) => (
+              <input
+                {...p}
+                className={inputCls}
+                placeholder="e.g. Apex Athletic Club"
+                value={f.organizationName}
+                onChange={(e) => setF({ ...f, organizationName: e.target.value })}
+              />
+            )}
+          </Field>
+
+          <Field label="Organization Type">
+            {(p) => (
+              <select
+                {...p}
+                className={inputCls}
+                value={f.type}
+                onChange={(e) =>
+                  setF({
+                    ...f,
+                    type: e.target.value as 'company' | 'university' | 'gym' | 'other',
+                  })
+                }
+              >
+                <option value="company">Corporate / Company</option>
+                <option value="university">University / School</option>
+                <option value="gym">Gym / Fitness Club</option>
+                <option value="other">Other Community</option>
+              </select>
+            )}
+          </Field>
+        </div>
+
+        <Field
+          label="Seat Limit"
+          helper="Total number of client members your organization will sponsor (1 to 500)"
+          error={err.seatLimit}
+        >
+          {(p) => (
+            <input
+              {...p}
+              type="number"
+              min={1}
+              max={500}
+              className={inputCls}
+              value={f.seatLimit}
+              onChange={(e) => setF({ ...f, seatLimit: Number(e.target.value) })}
+            />
+          )}
+        </Field>
+
+        <div className="pt-2 border-t border-line">
+          <h2 className="text-sm font-bold text-ink uppercase tracking-wider mb-3">
+            Lead Administrator Account
+          </h2>
+          <div className="space-y-4">
+            <Field label="Admin Full Name" error={err.adminName}>
+              {(p) => (
+                <input
+                  {...p}
+                  autoComplete="name"
+                  className={inputCls}
+                  placeholder="e.g. Sarah Jenkins"
+                  value={f.adminName}
+                  onChange={(e) => setF({ ...f, adminName: e.target.value })}
+                />
+              )}
+            </Field>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label="Admin Email" error={err.email}>
+                {(p) => (
+                  <input
+                    {...p}
+                    type="email"
+                    autoComplete="email"
+                    className={inputCls}
+                    placeholder="admin@org.com"
+                    value={f.email}
+                    onChange={(e) => setF({ ...f, email: e.target.value })}
+                  />
+                )}
+              </Field>
+
+              <Field label="Admin Password" error={err.password}>
+                {(p) => (
+                  <PasswordInput
+                    {...p}
+                    autoComplete="new-password"
+                    value={f.password}
+                    onChange={(e) => setF({ ...f, password: e.target.value })}
+                  />
+                )}
+              </Field>
+            </div>
+          </div>
+        </div>
+
+        <Btn type="submit" className="w-full mt-4" disabled={loading}>
+          {loading ? 'Creating organization...' : 'Create organization & get invite code'}
+        </Btn>
+      </form>
+
+      <div className="mt-8 space-y-1 text-ink-2">
+        <p>
+          Already registered?{' '}
+          <Link to="/login" className="font-bold text-ink underline underline-offset-4">
+            Log in to dashboard
+          </Link>
+        </p>
+        <p>
+          Have an invite code instead?{' '}
+          <Link to="/join" className="font-bold text-ink underline underline-offset-4">
+            Join your organization
+          </Link>
         </p>
       </div>
     </AuthLayout>

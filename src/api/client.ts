@@ -18,6 +18,34 @@ export class ApiError extends Error {
   }
 }
 
+export type UserRole = 'client' | 'specialist' | 'admin' | 'finance' | 'org_admin'
+
+export interface OrganizationInfo {
+  id: number
+  name: string
+  type: 'company' | 'university' | 'gym' | 'other'
+  logoUrl?: string | null
+  inviteCode?: string
+  seatLimit?: number
+  seatsUsed?: number
+  seatsRemaining?: number
+  sponsored?: boolean
+}
+
+export interface User {
+  id: number
+  name: string
+  email: string
+  role: UserRole
+  status?: 'active' | 'suspended'
+  organizationId?: number | null
+  organization?: OrganizationInfo | null
+  onboardingCompleted?: boolean
+  approvalStatus?: 'pending' | 'approved' | 'rejected'
+  photoUrl?: string | null
+  phone?: string | null
+}
+
 export function getToken(): string | null {
   return localStorage.getItem('rebound_token')
 }
@@ -88,11 +116,23 @@ export async function apiFetch<T = any>(endpoint: string, options: RequestInit =
 
   if (!res.ok) {
     const errorObj = data?.error
-    throw new ApiError(
-      errorObj?.message || `Request failed with status ${res.status}`,
-      errorObj?.code || 'REQUEST_FAILED',
-      res.status
-    )
+    let message = errorObj?.message || `Request failed with status ${res.status}`
+    const code = errorObj?.code || 'REQUEST_FAILED'
+
+    // Translate common backend domain error codes to friendly messages for the UI
+    if (code === 'SEATS_FULL') {
+      message = errorObj?.message || 'This organization has reached its seat limit. Contact your organization administrator.'
+    } else if (code === 'FIELD_ALREADY_ASSIGNED') {
+      message = errorObj?.message || 'This member already has an active specialist for this field. End that assignment first.'
+    } else if (code === 'ALREADY_SPONSORED') {
+      message = 'Your membership is sponsored by your organization. No checkout required.'
+    } else if (code === 'ORGANIZATION_NOT_FOUND') {
+      message = 'Organization invite code not found. Please verify the code and try again.'
+    } else if (code === 'EMAIL_IN_USE') {
+      message = 'An account with this email already exists. Please log in instead.'
+    }
+
+    throw new ApiError(message, code, res.status)
   }
 
   return data?.data as T
@@ -525,5 +565,97 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ action, reason }),
     })
+  },
+
+  // --- B2B Organization & Member Additions ---
+  async registerOrg(body: {
+    organizationName: string
+    type: 'company' | 'university' | 'gym' | 'other' | string
+    seatLimit: number
+    adminName: string
+    email: string
+    password: string
+  }) {
+    const data = await apiFetch<{ token: string; user: User; organization: OrganizationInfo }>('/auth/register-org', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    setToken(data.token)
+    setStoredUser(data.user)
+    return data
+  },
+
+  async joinOrg(body: {
+    inviteCode: string
+    name: string
+    email: string
+    password: string
+  }) {
+    const data = await apiFetch<{ token: string; user: User; organization: OrganizationInfo }>('/auth/join', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    setToken(data.token)
+    setStoredUser(data.user)
+    return data
+  },
+
+  async getOrgInfo() {
+    return apiFetch<OrganizationInfo & { organization: OrganizationInfo }>('/org/info')
+  },
+
+  async getOrgMembers(q?: string) {
+    const query = q ? `?q=${encodeURIComponent(q)}` : ''
+    return apiFetch<{ members: any[] }>(`/org/members${query}`)
+  },
+
+  async getOrgSpecialists() {
+    return apiFetch<{ specialists: any[] }>('/org/specialists')
+  },
+
+  async createOrgSpecialist(body: {
+    name: string
+    email: string
+    password: string
+    type: 'trainer' | 'nutritionist' | 'physical_therapist' | string
+    bio?: string
+    credentials?: string
+  }) {
+    return apiFetch<{ specialist: any }>('/org/specialists', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  async assignOrgMember(memberId: number, specialistId: number) {
+    return apiFetch<{ assignment: any }>('/org/assignments', {
+      method: 'POST',
+      body: JSON.stringify({ memberId, specialistId }),
+    })
+  },
+
+  async endOrgAssignment(clientId: number, specialistId: number) {
+    return apiFetch<{ assignment: any }>(`/org/assignments/${clientId}/${specialistId}/end`, {
+      method: 'PATCH',
+    })
+  },
+
+  async getOrgStats() {
+    return apiFetch<{
+      totalMembers: number
+      seatsUsed: number
+      seatLimit: number
+      seatsRemaining: number
+      membersWithAssignment: number
+      membersWithoutAssignment: number
+      activeMembersLast7Days: number
+      plansUpdatedLast7Days: number
+      assignmentsByField: { move: number; eat: number; recover: number }
+      stats: any
+    }>('/org/stats')
+  },
+
+  async getMySpecialists() {
+    return apiFetch<{ specialists: any[] }>('/my/specialists')
   },
 }

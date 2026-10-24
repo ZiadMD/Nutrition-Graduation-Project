@@ -129,7 +129,7 @@ router.get('/members', (req, res) => {
   const q = req.query.q?.trim().toLowerCase() || ''
 
   let sql = `
-    SELECT id, name, email, status, created_at AS joinedAt, last_active_at AS lastActiveAt
+    SELECT id, name, email, status, created_at AS joinedAt
     FROM users
     WHERE organization_id = ? AND role = 'client'
   `
@@ -171,7 +171,6 @@ router.get('/members', (req, res) => {
       email: m.email,
       status: m.status,
       joinedAt: m.joinedAt,
-      lastActiveAt: m.lastActiveAt || null,
       assignedSpecialists,
     }
   })
@@ -577,3 +576,4 @@ router.get('/stats', (req, res) => {
 })
 
 export default router
+
