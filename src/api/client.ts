@@ -458,4 +458,72 @@ export const api = {
       subscribers: any[]
     }>('/finance/subscriptions')
   },
+
+  // --- Customer Support & Reporting ---
+  async createSupportTicket(body: {
+    category: string
+    priority?: string
+    subject: string
+    description: string
+    bookingId?: number | null
+    targetUserId?: number | null
+  }) {
+    return apiFetch<{ ticket: any }>('/support/tickets', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  async getMySupportTickets() {
+    return apiFetch<{ tickets: any[] }>('/support/tickets/my')
+  },
+
+  async getSupportTicket(id: number | string) {
+    return apiFetch<{ ticket: any; messages: any[] }>(`/support/tickets/${id}`)
+  },
+
+  async sendTicketMessage(id: number | string, message: string, isInternal = false) {
+    return apiFetch<{ message: any }>(`/support/tickets/${id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ message, isInternal }),
+    })
+  },
+
+  async getAdminSupportTickets(params: { status?: string; category?: string; priority?: string; q?: string } = {}) {
+    const qs = new URLSearchParams()
+    if (params.status && params.status !== 'all') qs.set('status', params.status)
+    if (params.category && params.category !== 'all') qs.set('category', params.category)
+    if (params.priority && params.priority !== 'all') qs.set('priority', params.priority)
+    if (params.q) qs.set('q', params.q)
+    const query = qs.toString() ? `?${qs.toString()}` : ''
+    return apiFetch<{
+      metrics: {
+        totalOpen: number
+        urgentCount: number
+        inProgressCount: number
+        resolvedCount: number
+        disputesCount: number
+      }
+      tickets: any[]
+    }>(`/support/admin/tickets${query}`)
+  },
+
+  async updateAdminSupportTicket(id: number | string, body: {
+    status?: string
+    priority?: string
+    assignedTo?: number | null
+    resolutionNote?: string | null
+  }) {
+    return apiFetch<{ ticket: any }>(`/support/admin/tickets/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+
+  async executeAdminTicketAction(id: number | string, action: 'suspend_user' | 'cancel_booking' | 'flag_refund', reason?: string) {
+    return apiFetch<{ success: boolean; actionTaken: string; actionMessage: string }>(`/support/admin/tickets/${id}/action`, {
+      method: 'POST',
+      body: JSON.stringify({ action, reason }),
+    })
+  },
 }

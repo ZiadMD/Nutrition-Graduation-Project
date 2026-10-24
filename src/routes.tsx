@@ -11,6 +11,7 @@ import Schedule from './pages/specialist/Schedule'
 import Overview from './pages/admin/Overview'
 import Users from './pages/admin/Users'
 import Approvals from './pages/admin/Approvals'
+import AdminSupport from './pages/admin/Support'
 import { Today } from './pages/AppPages'
 import { SpecialistsList, SpecialistProfile } from './pages/client/Specialists'
 import Booking from './pages/client/Booking'
@@ -99,6 +100,8 @@ export const router = createBrowserRouter([
       { path: 'overview', Component: only('Admin', Overview) },
       { path: 'users', Component: only('Admin', Users) },
       { path: 'approvals', Component: only('Admin', Approvals) },
+      { path: 'admin/support', Component: only('Admin', AdminSupport) },
+      { path: 'support', Component: only('Admin', AdminSupport) },
       { path: 'finance/overview', Component: only('Finance', FinanceOverview) },
       { path: 'finance/transactions', Component: only('Finance', FinanceTransactions) },
       { path: 'finance/payouts', Component: only('Finance', FinancePayouts) },

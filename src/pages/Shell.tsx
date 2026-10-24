@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate, Link, useOutletContext } from 'react-router'
-import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard, Clock } from 'lucide-react'
+import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard, Clock, LifeBuoy } from 'lucide-react'
 import { Btn, Card, EmptyState, Wordmark } from '../ui'
 import { LanguageToggle } from '../components/ui/LanguageToggle'
+import { SupportModal } from '../components/support/SupportModal'
 import { useLanguage } from '../context/LanguageContext'
 import WaitingForApproval from './specialist/WaitingForApproval'
 
@@ -30,6 +31,7 @@ const getNavItems = (t: (key: string) => string) => ({
     { to: '/app/overview', label: t('nav.overview'), Icon: LayoutDashboard },
     { to: '/app/users', label: t('nav.users'), Icon: Users },
     { to: '/app/approvals', label: t('nav.approvals'), Icon: ShieldCheck },
+    { to: '/app/admin/support', label: t('nav.support'), Icon: LifeBuoy },
   ],
   Finance: [
     { to: '/app/finance/overview', label: t('nav.overview'), Icon: LayoutDashboard },
@@ -108,6 +110,7 @@ export default function Shell() {
   const [bell, setBell] = useState(false)
   const [menu, setMenu] = useState(false)
   const [moreOpen, setMore] = useState(false)
+  const [supportModalOpen, setSupportModalOpen] = useState(false)
   const loc = useLocation()
   const go = useNavigate()
   const isSpecialistPending =
@@ -231,6 +234,14 @@ export default function Shell() {
           <div className="flex items-center gap-2 relative">
             <LanguageToggle />
             <button
+              onClick={() => setSupportModalOpen(true)}
+              title={t('support.modal_title')}
+              aria-label={t('support.modal_title')}
+              className="relative size-11 grid place-items-center rounded-xl bg-white border border-line hover:bg-paper cursor-pointer text-ink transition"
+            >
+              <LifeBuoy size={20} />
+            </button>
+            <button
               onClick={() => { setBell(!bell); setMenu(false) }}
               aria-label="Notifications, 2 new"
               aria-expanded={bell}
@@ -285,6 +296,15 @@ export default function Shell() {
                   </button>
                 )
               })}
+              <button
+                className="w-full min-h-11 px-3 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer text-emerald-700"
+                onClick={() => {
+                  setMenu(false)
+                  setSupportModalOpen(true)
+                }}
+              >
+                <LifeBuoy size={18} aria-hidden /> {t('support.modal_title')}
+              </button>
               <button className="w-full min-h-11 px-3 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer" onClick={() => { api.logout(); go('/login') }}>
                 <LogOut size={18} aria-hidden /> {t('nav.logout')}
               </button>
@@ -353,6 +373,15 @@ export default function Shell() {
               <button className="w-full min-h-12 px-4 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer" onClick={() => setMore(false)}>
                 <Settings size={20} aria-hidden /> {t('nav.settings')}
               </button>
+              <button
+                className="w-full min-h-12 px-4 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer text-emerald-700"
+                onClick={() => {
+                  setMore(false)
+                  setSupportModalOpen(true)
+                }}
+              >
+                <LifeBuoy size={20} aria-hidden /> {t('support.modal_title')}
+              </button>
             </div>
 
             <div className="mt-auto pt-6">
@@ -364,6 +393,11 @@ export default function Shell() {
           </div>
         </div>
       )}
+
+      <SupportModal
+        open={supportModalOpen}
+        onClose={() => setSupportModalOpen(false)}
+      />
     </div>
   )
 }

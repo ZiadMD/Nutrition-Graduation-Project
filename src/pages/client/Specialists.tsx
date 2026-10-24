@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   Star,
   ShieldCheck,
+  ShieldAlert,
   Lock,
   MessageSquare,
   AlertCircle,
@@ -39,6 +40,7 @@ import {
 } from '../../data'
 import { api } from '../../api'
 import { StarRating } from '../../components/ui/StarRating'
+import { SupportModal } from '../../components/support/SupportModal'
 import { useLanguage } from '../../context/LanguageContext'
 
 type Filter = 'all' | Svc
@@ -375,6 +377,7 @@ export function SpecialistProfile() {
   const [submittingReview, setSubmittingReview] = useState<boolean>(false)
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null)
+  const [reportModalOpen, setReportModalOpen] = useState<boolean>(false)
 
   const loadData = () => {
     if (!id) return
@@ -527,6 +530,16 @@ export function SpecialistProfile() {
       <Btn onClick={book} className="w-full mt-4">
         {t('specialists.book_session')}
       </Btn>
+      <div className="mt-4 pt-3 border-t border-line text-center">
+        <button
+          type="button"
+          onClick={() => setReportModalOpen(true)}
+          className="text-[13px] font-semibold text-ink-2 hover:text-bad inline-flex items-center gap-1.5 transition cursor-pointer"
+        >
+          <ShieldAlert size={14} />
+          {t('support.report_specialist')}
+        </button>
+      </div>
     </Card>
   )
 
@@ -939,6 +952,14 @@ export function SpecialistProfile() {
           {t('specialists.book_session')}
         </Btn>
       </div>
+
+      <SupportModal
+        open={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        initialCategory="specialist_conduct"
+        initialTargetUserId={typeof s.id === 'number' ? s.id : parseInt(String(s.id), 10) || null}
+        initialTargetName={s.name}
+      />
     </div>
   )
 }
