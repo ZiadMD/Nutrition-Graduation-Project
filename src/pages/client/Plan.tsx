@@ -134,8 +134,8 @@ function MealRow({ m }: { m: Meal }) {
   )
 }
 
-function Band({ svc, who, action }: { svc: Svc; who: string; action?: { label: string; to: string } }) {
-  const S = SVC[svc]
+function Band({ svc, who, action }: { svc?: Svc; who: string; action?: { label: string; to: string } }) {
+  const S = (svc && SVC[svc]) || SVC.move
   return (
     <div className={`${S.tint} px-5 sm:px-6 py-4 flex flex-wrap items-center gap-x-4 gap-y-3 justify-between`}>
       <div className="flex items-center gap-3">

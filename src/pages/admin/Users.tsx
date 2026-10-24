@@ -4,7 +4,7 @@ import { Avatar, Btn, Card, Dialog, EmptyState, Field, Gate, inputCls, PageHead,
 import { api } from '../../api'
 
 type Status = 'Active' | 'Pending' | 'Suspended'
-type Role = 'Client' | 'Specialist' | 'Admin' | 'Finance'
+type Role = 'Client' | 'Specialist' | 'Admin' | 'Finance' | 'Org Admin' | 'Org_admin'
 type U = { id: number; name: string; email: string; role: Role; status: Status; joined: string; active: string }
 
 const seed: U[] = [
@@ -26,7 +26,15 @@ const st = {
   Pending: [Clock, 'bg-warn-tint text-[#7a5200]'],
   Suspended: [Ban, 'bg-bad-tint text-[#a02a2a]'],
 } as const
-const svcOf = { Client: 'move', Specialist: 'recover', Admin: 'eat', Finance: 'eat' } as const
+const svcOf: Record<string, Svc> = {
+  Client: 'move',
+  Specialist: 'recover',
+  Admin: 'eat',
+  Finance: 'eat',
+  'Org Admin': 'move',
+  Org_admin: 'move',
+  OrgAdmin: 'move',
+}
 
 function StatusPill({ s }: { s: Status }) {
   const [I, c] = st[s]
@@ -36,6 +44,13 @@ function StatusPill({ s }: { s: Status }) {
 function cap(s?: string): string {
   if (!s) return ''
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+}
+
+function formatRole(role?: string): Role {
+  if (!role) return 'Client'
+  const lower = role.toLowerCase()
+  if (lower === 'org_admin') return 'Org Admin'
+  return cap(lower) as Role
 }
 
 export default function Users() {
@@ -69,7 +84,7 @@ export default function Users() {
             id: u.id,
             name: u.name,
             email: u.email,
-            role: cap(u.role) as Role,
+            role: formatRole(u.role),
             status: cap(u.status) as Status,
             joined: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently',
             active: u.lastActiveAt ? 'Today' : 'Yesterday',
@@ -116,7 +131,11 @@ export default function Users() {
   }
 
   const list = rows
-    .filter((u) => (role === 'All' ? true : u.role === role))
+    .filter((u) => {
+      if (role === 'All') return true
+      if (role === 'Org Admin') return u.role === 'Org Admin' || (u.role as string) === 'Org_admin'
+      return u.role === role
+    })
     .filter((u) => (status === 'All' ? true : u.status === status))
     .filter((u) => `${u.name} ${u.email}`.toLowerCase().includes(q.trim().toLowerCase()))
 
@@ -161,7 +180,7 @@ export default function Users() {
         {/* <StateSwitcher value={state} onChange={setState} /> */}
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-3 mb-5">
-        <div><p className="label text-ink-2 mb-1.5">Role</p><Segment label="Role" options={['All', 'Client', 'Specialist', 'Admin', 'Finance']} value={role} onChange={setRole} /></div>
+        <div><p className="label text-ink-2 mb-1.5">Role</p><Segment label="Role" options={['All', 'Client', 'Specialist', 'Admin', 'Finance', 'Org Admin']} value={role} onChange={setRole} /></div>
         <div><p className="label text-ink-2 mb-1.5">Status</p><Segment label="Status" options={['All', 'Active', 'Pending', 'Suspended']} value={status} onChange={setStatus} /></div>
       </div>
 

@@ -159,7 +159,7 @@ export default function FinanceTransactions() {
                     })}
                   </td>
                   <td className="py-4 px-5 text-right font-bold text-ink whitespace-nowrap">
-                    +{tx.amount_egp.toLocaleString('en-US')} EGP
+                    +{(tx.amount_egp ?? 0).toLocaleString('en-US')} EGP
                   </td>
                 </tr>
               ))}

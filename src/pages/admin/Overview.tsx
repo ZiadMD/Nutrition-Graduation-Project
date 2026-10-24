@@ -79,10 +79,10 @@ export default function Overview() {
   }, [])
 
   const tiles = counts ? [
-    ['Users', counts.users.toLocaleString('en-US'), `+${Math.max(1, Math.round(counts.users * 0.1))} this week`, 'bg-sand'],
-    ['Active plans', counts.activePlans.toLocaleString('en-US'), `+${Math.max(1, Math.round(counts.activePlans * 0.15))} this week`, SVC.move.tint],
-    ['Bookings this week', counts.bookingsThisWeek.toLocaleString('en-US'), '+6% vs last week', SVC.eat.tint],
-    ['Specialists', counts.specialists.toLocaleString('en-US'), `${counts.pendingSpecialists || 3} waiting for approval`, SVC.recover.tint],
+    ['Users', (counts.users ?? 0).toLocaleString('en-US'), `+${Math.max(1, Math.round((counts.users ?? 0) * 0.1))} this week`, 'bg-sand'],
+    ['Active plans', (counts.activePlans ?? 0).toLocaleString('en-US'), `+${Math.max(1, Math.round((counts.activePlans ?? 0) * 0.15))} this week`, SVC.move.tint],
+    ['Bookings this week', (counts.bookingsThisWeek ?? 0).toLocaleString('en-US'), '+6% vs last week', SVC.eat.tint],
+    ['Specialists', (counts.specialists ?? 0).toLocaleString('en-US'), `${counts.pendingSpecialists || 3} waiting for approval`, SVC.recover.tint],
   ] : initialTiles
 
   const pendingCount = counts?.pendingSpecialists ?? 3
@@ -117,7 +117,7 @@ export default function Overview() {
           <ul className="mt-2">
             {activityList.map(([I, s, t, w], i) => (
               <li key={i} className="px-5 sm:px-6 py-3.5 flex items-center gap-4 border-b border-line last:border-0">
-                <span className={`size-10 rounded-xl grid place-items-center shrink-0 ${SVC[s].tint}`}><I size={18} aria-hidden /></span>
+                <span className={`size-10 rounded-xl grid place-items-center shrink-0 ${(SVC[s] || SVC.move).tint}`}><I size={18} aria-hidden /></span>
                 <p className="flex-1 text-[15px]">{t}</p>
                 <p className="text-[13px] text-ink-2 whitespace-nowrap">{w}</p>
               </li>

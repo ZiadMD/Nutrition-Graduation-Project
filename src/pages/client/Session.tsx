@@ -91,7 +91,7 @@ export default function Session() {
           <h2 className="h-display text-[20px] mt-5" style={{ letterSpacing: '-0.02em' }}>Shared plan notes</h2>
           <ul className="mt-3 space-y-2 flex-1 overflow-y-auto min-h-[160px]">
             {notes.map((n, i) => (
-              <li key={i} className={`${SVC[n.svc].tint} rounded-xl p-3`}>
+              <li key={i} className={`${(SVC[n.svc as Svc] || SVC.move).tint} rounded-xl p-3`}>
                 <p className="label uppercase">{n.by}</p>
                 <p className="text-[15px] leading-6">{n.text}</p>
               </li>

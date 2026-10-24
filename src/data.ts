@@ -89,7 +89,7 @@ export function nextSlots(id: string, count = 4) {
   return out
 }
 export const slotLabel = (s: { di: number; t: string }) => `${days[s.di].d} ${days[s.di].n} Oct, ${t12(s.t)}`
-export const egp = (n: number) => `${n.toLocaleString('en-US')} EGP`
+export const egp = (n?: number | null) => `${(Number(n) || 0).toLocaleString('en-US')} EGP`
 const r10 = (x: number) => Math.round(x / 10) * 10
 export const packagesFor = (rate: number) => [
   { id: 'single', name: 'Single session', n: 1, price: rate, note: 'One 30 minute session. Good for a first chat or a one-off question.' },

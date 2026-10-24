@@ -600,7 +600,7 @@ export function SpecialistProfile() {
 
                 <span className="flex items-center gap-2 text-[14px] text-ink-2">
                   <CalendarCheck size={16} aria-hidden />
-                  <span className="num">{s.sessions.toLocaleString('en-US')}</span>{' '}
+                  <span className="num">{(s.sessions ?? 0).toLocaleString('en-US')}</span>{' '}
                   {t('specialists.sessions_completed')}
                 </span>
               </div>
@@ -896,7 +896,7 @@ export function SpecialistProfile() {
                               <span
                                 key={t}
                                 className={`rounded-lg px-3 h-9 inline-flex items-center text-[14px] font-semibold ${
-                                  SVC[s.svc].tint
+                                  (SVC[s.svc] || SVC.move).tint
                                 }`}
                               >
                                 {t12(t)}
@@ -922,7 +922,7 @@ export function SpecialistProfile() {
                     <p className="font-bold">{p.name}</p>
                     <p className="mt-3">
                       <span className="num text-[32px]">
-                        {p.price.toLocaleString('en-US')}
+                        {(p.price ?? 0).toLocaleString('en-US')}
                       </span>{' '}
                       <span className="font-semibold">EGP</span>
                     </p>

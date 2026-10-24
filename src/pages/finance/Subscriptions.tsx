@@ -82,7 +82,7 @@ export default function FinanceSubscriptions() {
               <TrendingUp size={18} className="text-eat" />
             </div>
             <p className="num text-[36px] sm:text-[44px] leading-none mt-3 text-eat">
-              {mrr.toLocaleString('en-US')} <span className="text-[14px] font-normal font-sans text-ink-2">EGP / mo</span>
+              {(mrr ?? 0).toLocaleString('en-US')} <span className="text-[14px] font-normal font-sans text-ink-2">EGP / mo</span>
             </p>
             <p className="text-[13px] text-ink-2 mt-2">Active recurring subscription run-rate</p>
           </div>
@@ -93,7 +93,7 @@ export default function FinanceSubscriptions() {
               <Users size={18} className="text-ink-2" />
             </div>
             <p className="num text-[36px] sm:text-[44px] leading-none mt-3">
-              {totalActive} <span className="text-[14px] font-normal font-sans text-ink-2">Members</span>
+              {totalActive ?? 0} <span className="text-[14px] font-normal font-sans text-ink-2">Members</span>
             </p>
             <p className="text-[13px] text-ink-2 mt-2">100% active billing accounts</p>
           </div>
@@ -104,7 +104,7 @@ export default function FinanceSubscriptions() {
               <Sparkles size={18} className="text-ink-2" />
             </div>
             <p className="num text-[36px] sm:text-[44px] leading-none mt-3">
-              {arpu.toLocaleString('en-US')} <span className="text-[14px] font-normal font-sans text-ink-2">EGP / member</span>
+              {(arpu ?? 0).toLocaleString('en-US')} <span className="text-[14px] font-normal font-sans text-ink-2">EGP / member</span>
             </p>
             <p className="text-[13px] text-ink-2 mt-2">Average revenue per active user</p>
           </div>
@@ -134,7 +134,7 @@ export default function FinanceSubscriptions() {
                 </div>
 
                 <p className="num text-[28px] mt-4 font-bold">
-                  {t.revenue.toLocaleString('en-US')} <span className="text-[12px] font-normal font-sans text-ink-2">EGP / mo</span>
+                  {(t?.revenue ?? 0).toLocaleString('en-US')} <span className="text-[12px] font-normal font-sans text-ink-2">EGP / mo</span>
                 </p>
 
                 <div className="mt-3">
@@ -186,7 +186,7 @@ export default function FinanceSubscriptions() {
                     </span>
                   </td>
                   <td className="py-4 px-5 font-bold text-ink">
-                    {s.price_egp.toLocaleString('en-US')} EGP
+                    {(s?.price_egp ?? 0).toLocaleString('en-US')} EGP
                   </td>
                   <td className="py-4 px-5 capitalize text-ink-2">
                     {s.method.replace('_', ' ')}

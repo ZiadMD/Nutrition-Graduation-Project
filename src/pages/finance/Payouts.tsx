@@ -182,18 +182,18 @@ export default function FinancePayouts() {
                     {sp.completedSessions}
                   </td>
                   <td className="py-3.5 px-5 font-semibold">
-                    {sp.grossEarned.toLocaleString('en-US')} EGP
+                    {(sp.grossEarned ?? 0).toLocaleString('en-US')} EGP
                   </td>
                   <td className="py-3.5 px-5 text-ink-2">
-                    {sp.platformFee.toLocaleString('en-US')} EGP
+                    {(sp.platformFee ?? 0).toLocaleString('en-US')} EGP
                   </td>
                   <td className="py-3.5 px-5 font-bold text-ink">
-                    {sp.netOwed.toLocaleString('en-US')} EGP
+                    {(sp.netOwed ?? 0).toLocaleString('en-US')} EGP
                   </td>
                   <td className="py-3.5 px-5">
-                    {sp.pendingAmount > 0 ? (
+                    {(sp.pendingAmount ?? 0) > 0 ? (
                       <span className="font-bold text-recover">
-                        {sp.pendingAmount.toLocaleString('en-US')} EGP
+                        {(sp.pendingAmount ?? 0).toLocaleString('en-US')} EGP
                       </span>
                     ) : (
                       <span className="text-[12px] font-semibold text-ok bg-ok-tint px-2 py-0.5 rounded">
@@ -248,13 +248,13 @@ export default function FinancePayouts() {
                     {h.specialist_name}
                   </td>
                   <td className="py-3.5 px-5 text-ink-2">
-                    {h.amount_egp.toLocaleString('en-US')} EGP
+                    {(h.amount_egp ?? 0).toLocaleString('en-US')} EGP
                   </td>
                   <td className="py-3.5 px-5 text-ink-2">
-                    {h.platform_cut_egp.toLocaleString('en-US')} EGP
+                    {(h.platform_cut_egp ?? 0).toLocaleString('en-US')} EGP
                   </td>
                   <td className="py-3.5 px-5 font-bold text-ink">
-                    {h.net_payout_egp.toLocaleString('en-US')} EGP
+                    {(h.net_payout_egp ?? 0).toLocaleString('en-US')} EGP
                   </td>
                   <td className="py-3.5 px-5">
                     <span className={`px-2 py-0.5 rounded text-[12px] font-bold ${h.status === 'paid' ? 'bg-ok-tint text-ok' : 'bg-sand text-ink'}`}>
@@ -290,16 +290,16 @@ export default function FinancePayouts() {
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-2">Gross Billings:</span>
-                <span className="font-bold">{selectedSpecialist.grossEarned.toLocaleString('en-US')} EGP</span>
+                <span className="font-bold">{(selectedSpecialist.grossEarned ?? 0).toLocaleString('en-US')} EGP</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-2">Platform Cut (20%):</span>
-                <span className="font-bold text-ink-2">-{selectedSpecialist.platformFee.toLocaleString('en-US')} EGP</span>
+                <span className="font-bold text-ink-2">-{(selectedSpecialist.platformFee ?? 0).toLocaleString('en-US')} EGP</span>
               </div>
               <div className="pt-2 border-t border-line flex justify-between text-[16px]">
                 <span className="font-bold">Net Payout to Specialist:</span>
                 <span className="font-bold text-recover">
-                  {(selectedSpecialist.pendingAmount > 0 ? selectedSpecialist.pendingAmount : selectedSpecialist.netOwed).toLocaleString('en-US')} EGP
+                  {((selectedSpecialist.pendingAmount > 0 ? selectedSpecialist.pendingAmount : selectedSpecialist.netOwed) ?? 0).toLocaleString('en-US')} EGP
                 </span>
               </div>
             </div>

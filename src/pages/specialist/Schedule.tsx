@@ -88,9 +88,10 @@ export default function Schedule() {
     const blk = blocked[wkKey(d, m)]
     const base = 'w-full min-h-11 h-full rounded-lg text-left px-2 text-[13px] leading-4 font-semibold flex flex-col justify-center cursor-pointer'
     if (b) {
-      const s = kindSvc[b.kind]
+      const s = kindSvc[b.kind] || 'move'
+      const conf = SVC[s] || SVC.move
       return (
-        <button onClick={() => setPick({ key: wkKey(d, m), d, m })} className={`${base} ${SVC[s].tint} border-l-4`} style={{ borderLeftColor: SVC[s].hex }} aria-label={`${dayNames[d]} ${t12(m)}: ${kindLabel[b.kind]} with ${b.who}`}>
+        <button onClick={() => setPick({ key: wkKey(d, m), d, m })} className={`${base} ${conf.tint} border-l-4`} style={{ borderLeftColor: conf.hex }} aria-label={`${dayNames[d]} ${t12(m)}: ${kindLabel[b.kind]} with ${b.who}`}>
           <span className="truncate">{b.who}</span>
         </button>
       )

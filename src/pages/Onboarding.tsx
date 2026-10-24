@@ -526,9 +526,10 @@ function Section({ title, sub, children }: { title: string; sub: string; childre
 }
 
 function Row({ svc, Icon, head, lines }: { svc: 'move' | 'eat' | 'recover'; Icon: typeof Dumbbell; head: string; lines: string[] }) {
+  const conf = (svc && SVC[svc]) || SVC.move
   return (
-    <div className={`${SVC[svc].tint} rounded-2xl p-5 flex gap-4`}>
-      <span className={`size-12 rounded-xl grid place-items-center shrink-0 ${SVC[svc].bg}`}>
+    <div className={`${conf.tint} rounded-2xl p-5 flex gap-4`}>
+      <span className={`size-12 rounded-xl grid place-items-center shrink-0 ${conf.bg}`}>
         <Icon size={24} aria-hidden />
       </span>
       <div>

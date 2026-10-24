@@ -219,7 +219,7 @@ export default function Checkout() {
             <div className="flex justify-between gap-3"><dt className="text-ink-2">{o.type}</dt><dd className="font-semibold text-right">{o.when}</dd></div>
             <div className="flex justify-between gap-3"><dt className="text-ink-2">Service fee</dt><dd className="font-semibold">Free</dd></div>
           </dl>
-          <div className={`mt-5 rounded-xl p-4 flex items-baseline justify-between ${SVC[s.svc].tint}`}>
+          <div className={`mt-5 rounded-xl p-4 flex items-baseline justify-between ${(SVC[s?.svc as Svc] || SVC.move).tint}`}>
             <span className="font-semibold">Total</span>
             <span className="num text-[28px]">{isSponsored ? '0 EGP' : egp(total)}</span>
           </div>

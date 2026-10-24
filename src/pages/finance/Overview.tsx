@@ -133,7 +133,7 @@ export default function FinanceOverview() {
               <DollarSign size={18} className="text-ink-2" />
             </div>
             <p className="num text-[36px] sm:text-[44px] leading-none mt-3">
-              {m.grossRevenue.toLocaleString('en-US')} <span className="text-[16px] font-sans text-ink-2 font-normal">EGP</span>
+              {(m?.grossRevenue ?? 0).toLocaleString('en-US')} <span className="text-[16px] font-sans text-ink-2 font-normal">EGP</span>
             </p>
             <p className="text-[13px] text-ink-2 font-medium mt-3">All-time inflow across platform</p>
           </div>
@@ -144,9 +144,9 @@ export default function FinanceOverview() {
               <TrendingUp size={18} className="text-eat" />
             </div>
             <p className="num text-[36px] sm:text-[44px] leading-none mt-3 text-eat">
-              {m.mrr.toLocaleString('en-US')} <span className="text-[16px] font-sans text-ink-2 font-normal">EGP</span>
+              {(m?.mrr ?? 0).toLocaleString('en-US')} <span className="text-[16px] font-sans text-ink-2 font-normal">EGP</span>
             </p>
-            <p className="text-[13px] text-ink-2 font-medium mt-3">{m.activeSubscribers} active paying subscribers</p>
+            <p className="text-[13px] text-ink-2 font-medium mt-3">{m?.activeSubscribers ?? 0} active paying subscribers</p>
           </div>
 
           <div className={`${SVC.recover.tint} rounded-2xl p-5 sm:p-6`}>
@@ -155,10 +155,10 @@ export default function FinanceOverview() {
               <Coins size={18} className="text-recover" />
             </div>
             <p className="num text-[36px] sm:text-[44px] leading-none mt-3 text-recover">
-              {m.specialistDisbursed.toLocaleString('en-US')} <span className="text-[16px] font-sans text-ink-2 font-normal">EGP</span>
+              {(m?.specialistDisbursed ?? 0).toLocaleString('en-US')} <span className="text-[16px] font-sans text-ink-2 font-normal">EGP</span>
             </p>
             <p className="text-[13px] text-ink-2 font-medium mt-3">
-              {m.specialistPending > 0 ? `${m.specialistPending.toLocaleString('en-US')} EGP pending approval` : 'All payouts settled'}
+              {(m?.specialistPending ?? 0) > 0 ? `${(m?.specialistPending ?? 0).toLocaleString('en-US')} EGP pending approval` : 'All payouts settled'}
             </p>
           </div>
 
@@ -168,7 +168,7 @@ export default function FinanceOverview() {
               <Wallet size={18} className="text-move" />
             </div>
             <p className="num text-[36px] sm:text-[44px] leading-none mt-3 text-move">
-              {m.netPlatformProfit.toLocaleString('en-US')} <span className="text-[16px] font-sans text-ink-2 font-normal">EGP</span>
+              {(m?.netPlatformProfit ?? 0).toLocaleString('en-US')} <span className="text-[16px] font-sans text-ink-2 font-normal">EGP</span>
             </p>
             <p className="text-[13px] text-ink-2 font-medium mt-3">Retained earnings after payouts</p>
           </div>
@@ -183,7 +183,7 @@ export default function FinanceOverview() {
                 <p className="text-[14px] text-ink-2">Total platform earnings over the last 8 weeks</p>
               </div>
               <span className="label bg-paper border border-line px-3 py-1.5 rounded-full font-bold">
-                ARPU: {m.arpu.toLocaleString('en-US')} EGP
+                ARPU: {(m?.arpu ?? 0).toLocaleString('en-US')} EGP
               </span>
             </div>
             <LineChart
@@ -209,17 +209,17 @@ export default function FinanceOverview() {
               <div>
                 <div className="flex justify-between text-[14px] font-semibold mb-1">
                   <span>Recurring Subscriptions</span>
-                  <span>{streams.subscriptions.amount.toLocaleString('en-US')} EGP ({streams.subscriptions.percentage}%)</span>
+                  <span>{(streams?.subscriptions?.amount ?? 0).toLocaleString('en-US')} EGP ({streams?.subscriptions?.percentage ?? 0}%)</span>
                 </div>
                 <div className="w-full h-3 bg-paper rounded-full overflow-hidden border border-line">
-                  <div className="h-full bg-eat rounded-full" style={{ width: `${streams.subscriptions.percentage}%` }} />
+                  <div className="h-full bg-eat rounded-full" style={{ width: `${streams?.subscriptions?.percentage ?? 0}%` }} />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-[14px] font-semibold mb-1">
                   <span>1-on-1 Consultations</span>
-                  <span>{streams.sessions.amount.toLocaleString('en-US')} EGP ({streams.sessions.percentage}%)</span>
+                  <span>{(streams?.sessions?.amount ?? 0).toLocaleString('en-US')} EGP ({streams?.sessions?.percentage ?? 0}%)</span>
                 </div>
                 <div className="w-full h-3 bg-paper rounded-full overflow-hidden border border-line">
                   <div className="h-full bg-move rounded-full" style={{ width: `${streams.sessions.percentage}%` }} />
@@ -305,7 +305,7 @@ export default function FinanceOverview() {
                       </span>
                     </td>
                     <td className="py-3 text-right font-bold text-ink">
-                      +{tx.amount_egp.toLocaleString('en-US')} EGP
+                      +{(tx.amount_egp ?? 0).toLocaleString('en-US')} EGP
                     </td>
                   </tr>
                 ))}
