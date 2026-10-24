@@ -25,6 +25,8 @@ export * from './ui/Segment'
 export * from './ui/PainChip'
 export * from './ui/NotFoundState'
 export * from './ui/Illustrations'
+export * from './ui/StarRating'
+export * from './ui/LanguageToggle'
 
 // Charts
 export * from './charts/LineChart'

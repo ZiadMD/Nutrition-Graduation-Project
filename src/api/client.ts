@@ -192,6 +192,37 @@ export const api = {
     return apiFetch<{ slots: any[] }>(`/specialists/${id}/slots${query}`)
   },
 
+  async getSpecialistReviews(id: string | number) {
+    return apiFetch<{
+      summary: {
+        averageRating: number
+        totalReviews: number
+        breakdown: Record<string, number>
+        clientsCount: number
+      }
+      reviews: Array<{
+        id: number
+        rating: number
+        comment: string
+        createdAt: string
+        client: { id: number; name: string }
+      }>
+      eligibility: {
+        canReview: boolean
+        alreadyReviewed: boolean
+        userReview?: { id: number; rating: number; comment: string; createdAt: string }
+        reason?: string | null
+      }
+    }>(`/specialists/${id}/reviews`)
+  },
+
+  async submitSpecialistReview(id: string | number, body: { rating: number; comment?: string }) {
+    return apiFetch<{ review: any }>(`/specialists/${id}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
   // --- Bookings ---
   async createBooking(body: { specialistId: number; slotId: number; packageId?: number; sessionType: string; notes?: string }) {
     return apiFetch<{ booking: any }>('/bookings', {

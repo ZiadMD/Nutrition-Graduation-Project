@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate, Link, useOutletContext } from 'react-router'
 import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard, Clock } from 'lucide-react'
 import { Btn, Card, EmptyState, Wordmark } from '../ui'
+import { LanguageToggle } from '../components/ui/LanguageToggle'
+import { useLanguage } from '../context/LanguageContext'
 import WaitingForApproval from './specialist/WaitingForApproval'
 
 import { RoleOnly, type Role, type RoleContextType } from '@/components/auth/RoleOnly'
@@ -10,34 +12,32 @@ export { RoleOnly, type Role }
 type Ctx = RoleContextType
 export const useRole = () => useOutletContext<Ctx>().role
 
-const nav = [
-  { to: '/app/today', label: 'Today', Icon: House },
-  { to: '/app/specialists', label: 'Specialists', Icon: Users },
-  { to: '/app/bookings', label: 'Bookings', Icon: CalendarDays },
-  { to: '/app/plan', label: 'My plan', Icon: ClipboardList },
-  { to: '/app/progress', label: 'Progress', Icon: LineChart },
-  { to: '/app/ai-plan', label: 'AI plan', Icon: Sparkles },
-]
-const navs: Record<Role, typeof nav> = {
-  Client: nav,
+const getNavItems = (t: (key: string) => string) => ({
+  Client: [
+    { to: '/app/today', label: t('nav.today'), Icon: House },
+    { to: '/app/specialists', label: t('nav.specialists'), Icon: Users },
+    { to: '/app/bookings', label: t('nav.bookings'), Icon: CalendarDays },
+    { to: '/app/plan', label: t('nav.plan'), Icon: ClipboardList },
+    { to: '/app/progress', label: t('nav.progress'), Icon: LineChart },
+    { to: '/app/ai-plan', label: t('nav.ai_plan'), Icon: Sparkles },
+  ],
   Specialist: [
-    { to: '/app/today', label: 'Today', Icon: House },
-    { to: '/app/clients', label: 'Clients', Icon: Contact },
-    { to: '/app/schedule', label: 'Schedule', Icon: CalendarDays },
+    { to: '/app/today', label: t('nav.today'), Icon: House },
+    { to: '/app/clients', label: t('nav.clients'), Icon: Contact },
+    { to: '/app/schedule', label: t('nav.schedule'), Icon: CalendarDays },
   ],
   Admin: [
-    { to: '/app/overview', label: 'Overview', Icon: LayoutDashboard },
-    { to: '/app/users', label: 'Users', Icon: Users },
-    { to: '/app/approvals', label: 'Approvals', Icon: ShieldCheck },
+    { to: '/app/overview', label: t('nav.overview'), Icon: LayoutDashboard },
+    { to: '/app/users', label: t('nav.users'), Icon: Users },
+    { to: '/app/approvals', label: t('nav.approvals'), Icon: ShieldCheck },
   ],
   Finance: [
-    { to: '/app/finance/overview', label: 'Overview', Icon: LayoutDashboard },
-    { to: '/app/finance/transactions', label: 'Ledger', Icon: ReceiptText },
-    { to: '/app/finance/payouts', label: 'Payouts', Icon: Coins },
-    { to: '/app/finance/subscriptions', label: 'Subscriptions', Icon: CreditCard },
+    { to: '/app/finance/overview', label: t('nav.overview'), Icon: LayoutDashboard },
+    { to: '/app/finance/transactions', label: t('nav.ledger'), Icon: ReceiptText },
+    { to: '/app/finance/payouts', label: t('nav.payouts'), Icon: Coins },
+    { to: '/app/finance/subscriptions', label: t('nav.subscriptions'), Icon: CreditCard },
   ],
-}
-const allNav = [...nav, ...navs.Specialist.slice(1), ...navs.Admin, ...navs.Finance]
+})
 
 import { api, IS_DEMO_MODE, getStoredUser, getToken, removeToken } from '../api'
 
@@ -99,6 +99,10 @@ const DEMO_USERS: Record<Role, { id: number; name: string; email: string; role: 
 }
 
 export default function Shell() {
+  const { t, isRtl } = useLanguage()
+  const navs = getNavItems(t)
+  const allNav = [...navs.Client, ...navs.Specialist.slice(1), ...navs.Admin, ...navs.Finance]
+
   const [currentUser, setCurrentUser] = useState<any>(getStoredUser())
   const [role, setRole] = useState<Role>(roleFromUser(getStoredUser()))
   const [bell, setBell] = useState(false)
@@ -190,7 +194,7 @@ export default function Shell() {
 
   return (
     <div className="min-h-screen bg-paper">
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-[264px] bg-white border-r border-line flex-col p-5 z-30">
+      <aside className={`hidden lg:flex fixed inset-y-0 ${isRtl ? 'right-0 border-l' : 'left-0 border-r'} w-[264px] bg-white border-line flex-col p-5 z-30`}>
         <Link to={home(role)} className="px-3 h-12 flex items-center" aria-label="Rebound">
           <Wordmark />
         </Link>
@@ -210,7 +214,7 @@ export default function Shell() {
         </div>
       </aside>
 
-      <div className="lg:pl-[264px]">
+      <div className={isRtl ? 'lg:pr-[264px]' : 'lg:pl-[264px]'}>
         <header className="sticky top-0 z-20 bg-paper border-b border-line h-16 lg:h-[72px] px-5 lg:px-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to={home(role)} className="lg:hidden" aria-label="Rebound">
@@ -225,6 +229,7 @@ export default function Shell() {
             </p>
           </div>
           <div className="flex items-center gap-2 relative">
+            <LanguageToggle />
             <button
               onClick={() => { setBell(!bell); setMenu(false) }}
               aria-label="Notifications, 2 new"
@@ -250,8 +255,8 @@ export default function Shell() {
             >
               {moreOpen ? <X size={22} aria-hidden /> : <Menu size={22} aria-hidden />}
             </button>
-            <Pop open={bell} onClose={() => setBell(false)} className="w-[320px] max-w-[calc(100vw-40px)] p-2">
-              <p className="px-3 pt-2 pb-1 font-bold">Notifications</p>
+            <Pop open={bell} onClose={() => setBell(false)} className={`w-[320px] max-w-[calc(100vw-40px)] p-2 ${isRtl ? 'left-0 right-auto' : 'right-0'}`}>
+              <p className="px-3 pt-2 pb-1 font-bold">{t('nav.notifications')}</p>
               {({
                 Client: [['Dr. Mona changed Tuesday\'s squats', '2 h ago'], ['Hana added a lentil soup swap', 'Yesterday']],
                 Specialist: [['Laila Mostafa reported pain 8/10', '1 h ago'], ['Youssef Nabil reported pain 6/10', 'Yesterday']],
@@ -264,14 +269,14 @@ export default function Shell() {
                 </div>
               ))}
             </Pop>
-            <Pop open={menu} onClose={() => setMenu(false)} className="w-[240px] p-2">
+            <Pop open={menu} onClose={() => setMenu(false)} className={`w-[240px] p-2 ${isRtl ? 'left-0 right-auto' : 'right-0'}`}>
               <div className="px-3 py-2 border-b border-line mb-1">
                 <p className="font-bold">{name}</p>
                 <p className="text-[14px] text-ink-2">{role}</p>
               </div>
               {[
-                [UserRound, 'Profile'],
-                [Settings, 'Settings'],
+                [UserRound, t('nav.profile')],
+                [Settings, t('nav.settings')],
               ].map(([I, l]) => {
                 const Icon = I as typeof Settings
                 return (
@@ -281,7 +286,7 @@ export default function Shell() {
                 )
               })}
               <button className="w-full min-h-11 px-3 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer" onClick={() => { api.logout(); go('/login') }}>
-                <LogOut size={18} aria-hidden /> Log out
+                <LogOut size={18} aria-hidden /> {t('nav.logout')}
               </button>
             </Pop>
           </div>
@@ -303,12 +308,21 @@ export default function Shell() {
 
       {moreOpen && (
         <div className="fixed inset-0 z-40 bg-ink/50 lg:hidden" onClick={() => setMore(false)}>
-          <div role="dialog" aria-modal="true" aria-label="Navigation menu" className="absolute inset-y-0 right-0 flex w-[min(88vw,360px)] flex-col overflow-y-auto bg-white p-5" onClick={(e) => e.stopPropagation()}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            className={`absolute inset-y-0 ${isRtl ? 'left-0' : 'right-0'} flex w-[min(88vw,360px)] flex-col overflow-y-auto bg-white p-5`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-line pb-4">
-              <p className="h-display text-[24px]">Menu</p>
-              <button onClick={() => setMore(false)} aria-label="Close" className="size-11 grid place-items-center rounded-xl hover:bg-ink/5 cursor-pointer">
-                <X size={22} aria-hidden />
-              </button>
+              <p className="h-display text-[24px]">{t('nav.menu')}</p>
+              <div className="flex items-center gap-2">
+                <LanguageToggle variant="pill" />
+                <button onClick={() => setMore(false)} aria-label="Close" className="size-11 grid place-items-center rounded-xl hover:bg-ink/5 cursor-pointer">
+                  <X size={22} aria-hidden />
+                </button>
+              </div>
             </div>
 
             <div className="my-5 flex items-center gap-3 rounded-2xl bg-sand p-4">
@@ -334,17 +348,17 @@ export default function Shell() {
 
             <div className="mt-5 border-t border-line pt-3">
               <button className="w-full min-h-12 px-4 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer" onClick={() => setMore(false)}>
-                <UserRound size={20} aria-hidden /> Profile
+                <UserRound size={20} aria-hidden /> {t('nav.profile')}
               </button>
               <button className="w-full min-h-12 px-4 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer" onClick={() => setMore(false)}>
-                <Settings size={20} aria-hidden /> Settings
+                <Settings size={20} aria-hidden /> {t('nav.settings')}
               </button>
             </div>
 
             <div className="mt-auto pt-6">
               <RoleSwitch role={role} setRole={changeRole} />
               <button className="mt-4 w-full min-h-12 px-4 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer" onClick={() => { api.logout(); go('/login') }}>
-                <LogOut size={20} aria-hidden /> Log out
+                <LogOut size={20} aria-hidden /> {t('nav.logout')}
               </button>
             </div>
           </div>

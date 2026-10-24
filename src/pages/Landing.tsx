@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { ArrowRight, Check, ChevronDown, Menu, X, TriangleAlert, ShieldCheck } from 'lucide-react'
-import { Btn, Card, Tag, SVC, Wordmark, Tabs, Avatar } from '../ui'
+import { Btn, Card, Tag, SVC, Wordmark, Tabs, Avatar, StarRating, LanguageToggle } from '../ui'
 import { specialists, week, type Svc } from '../data'
 
 const wrap = 'mx-auto max-w-[1280px] px-5 lg:px-10'
@@ -28,19 +28,23 @@ function Header() {
           ))}
         </nav>
         <div className="hidden lg:flex items-center gap-3">
+          <LanguageToggle />
           <Btn variant="ghost" to="/login">
             Log in
           </Btn>
           <Btn to="/signup">Get started</Btn>
         </div>
-        <button
-          className="lg:hidden size-11 grid place-items-center rounded-xl border border-line bg-white cursor-pointer"
-          aria-label={open ? 'Close menu' : 'Open menu'}
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <LanguageToggle variant="pill" />
+          <button
+            className="size-11 grid place-items-center rounded-xl border border-line bg-white cursor-pointer"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
       {open && (
         <div className="lg:hidden border-t border-line bg-paper px-5 pb-5 pt-2 flex flex-col">
@@ -422,9 +426,15 @@ function Specialists() {
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <p className="h-display text-[22px] leading-6">{s.name}</p>
-                <p className="mt-2 text-[15px] text-ink-2">{s.cred}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <StarRating rating={s.rating ?? 4.9} size={15} showValue />
+                  <span className="text-[13px] text-ink-2 font-medium">({s.reviewsCount ?? 4} reviews)</span>
+                </div>
+                <p className="mt-2 text-[15px] text-ink-2 line-clamp-2">{s.cred}</p>
                 <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
-                  <span className="text-[14px] font-semibold">{s.years} years experience</span>
+                  <span className="text-[13px] font-semibold text-ink-2">
+                    <strong className="text-ink">{s.clientsCount ?? 120}</strong> clients worked with
+                  </span>
                   <span className="inline-flex items-center gap-1 text-[14px] font-bold">
                     Meet {s.name.split(' ')[1]}
                     <ArrowRight size={17} aria-hidden className="transition-transform group-hover:translate-x-1 motion-reduce:transition-none" />
