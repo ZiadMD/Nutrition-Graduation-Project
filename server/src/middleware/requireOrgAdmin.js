@@ -23,3 +23,4 @@ export function requireOrgAdmin(req, res, next) {
   req.orgId = req.user.organizationId
   next()
 }
+

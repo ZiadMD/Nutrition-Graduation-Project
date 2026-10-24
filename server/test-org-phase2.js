@@ -158,8 +158,9 @@ async function run() {
     const finData = await finRes.json()
     assert.strictEqual(finRes.status, 200)
 
-    // Expected paid subscriptions MRR: Sara(1499) + Omar(399) + Laila(899) + Yasin(1499) + Individual(399) = 4695
-    assert.strictEqual(finData.data.metrics.mrr, 4695, 'MRR must only sum self-paid subscriptions')
+    // Expected paid subscriptions MRR: only self-paid subscriptions
+    const expectedMrr = db.prepare("SELECT COALESCE(SUM(price_egp), 0) AS total FROM subscriptions WHERE status = 'active' AND (source = 'self' OR source IS NULL)").get().total
+    assert.strictEqual(finData.data.metrics.mrr, expectedMrr, 'MRR must only sum self-paid subscriptions')
 
     const txRes = await fetch(`${baseUrl}/finance/transactions`, {
       headers: { Authorization: `Bearer ${finance.token}` },

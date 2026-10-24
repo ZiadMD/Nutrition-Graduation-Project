@@ -38,6 +38,17 @@ router.post('/', requireAuth, requireRole('client'), validate(checkoutSchema), (
   const clientId = req.user.id
   const { planName, method } = req.body
 
+  // Check if member is part of an organization
+  const user = db.prepare('SELECT organization_id FROM users WHERE id = ?').get(clientId)
+  if (user && user.organization_id !== null) {
+    return res.status(409).json({
+      error: {
+        code: 'ALREADY_SPONSORED',
+        message: 'Your membership is sponsored by your organization. No checkout required.',
+      },
+    })
+  }
+
   const priceEgp = PLAN_PRICES[planName]
 
   // Generate a realistic demo reference code, e.g. DEMO-8F2K41
@@ -46,8 +57,8 @@ router.post('/', requireAuth, requireRole('client'), validate(checkoutSchema), (
 
   const info = db
     .prepare(
-      `INSERT INTO subscriptions (client_id, plan_name, price_egp, method, status, reference)
-       VALUES (?, ?, ?, ?, 'active', ?)`
+      `INSERT INTO subscriptions (client_id, plan_name, price_egp, method, status, source, reference)
+       VALUES (?, ?, ?, ?, 'active', 'self', ?)`
     )
     .run(clientId, planName, priceEgp, method, reference)
 
@@ -64,6 +75,8 @@ router.post('/', requireAuth, requireRole('client'), validate(checkoutSchema), (
         priceEgp: subscription.price_egp,
         method: subscription.method,
         status: subscription.status,
+        source: subscription.source || 'self',
+        organizationName: null,
         reference: subscription.reference,
         createdAt: subscription.created_at,
       },
@@ -91,6 +104,13 @@ router.get('/current', requireAuth, requireRole('client'), (req, res) => {
     return res.json({ data: { subscription: null } })
   }
 
+  const user = db.prepare('SELECT organization_id FROM users WHERE id = ?').get(clientId)
+  let orgName = null
+  if (user?.organization_id) {
+    const org = db.prepare('SELECT name FROM organizations WHERE id = ?').get(user.organization_id)
+    orgName = org?.name || null
+  }
+
   res.json({
     data: {
       subscription: {
@@ -100,6 +120,8 @@ router.get('/current', requireAuth, requireRole('client'), (req, res) => {
         priceEgp: subscription.price_egp,
         method: subscription.method,
         status: subscription.status,
+        source: subscription.source || 'self',
+        organizationName: subscription.source === 'organization' ? orgName : null,
         reference: subscription.reference,
         createdAt: subscription.created_at,
       },
