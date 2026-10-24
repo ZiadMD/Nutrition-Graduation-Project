@@ -588,7 +588,7 @@ function Pricing() {
                     </span>
                   </div>
                   <div className="p-4 rounded-xl bg-white border border-line">
-                    <strong className="text-ink font-bold text-sm block">Privacy-First Analytics</strong>
+                    <strong className="text-ink font-bold text-sm block">Aggregate Usage Dashboard</strong>
                     <span className="text-xs text-ink-2 mt-1 block">
                       Track seat utilization and activity aggregates with zero clinical data exposure.
                     </span>
@@ -631,7 +631,7 @@ function Pricing() {
                     'Your own specialists or platform specialists',
                     'Invite codes for instant zero-payment onboarding',
                     'Members skip payment (fully sponsored)',
-                    'Aggregate health dashboard for org admins',
+                    'Aggregate usage dashboard for org admins',
                     '1 to 500 scalable member seats',
                   ].map((feat) => (
                     <div key={feat} className="flex gap-3 text-sm text-ink">

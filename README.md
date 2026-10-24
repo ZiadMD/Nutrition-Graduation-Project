@@ -8,10 +8,11 @@ Welcome to **Rebound**, a multi-disciplinary health and wellness platform that c
 1. [Tech Stack](#-tech-stack)
 2. [Quick Start for Beginners](#-quick-start-for-beginners)
 3. [Demo Accounts & Role Switcher](#-demo-accounts--role-switcher)
-4. [Project Structure](#-project-structure)
-5. [Architecture Explainer for Students](#-architecture-explainer-for-students)
-6. [API & Manual Testing](#-api--manual-testing)
-7. [Scripts Reference](#-scripts-reference)
+4. [Organizations (B2B)](#-organizations-b2b)
+5. [Project Structure](#-project-structure)
+6. [Architecture Explainer for Students](#-architecture-explainer-for-students)
+7. [API & Manual Testing](#-api--manual-testing)
+8. [Scripts Reference](#-scripts-reference)
 
 ---
 
@@ -95,7 +96,58 @@ All demo accounts share the password: **`demo1234`**
 | `admin@demo.com` | **Admin** | Admin Team | Full platform metrics, user status management, specialist approvals, user creation. |
 | `finance@demo.com` | **Finance** | Tamer Fahmy | Dedicated Financial Dashboard, transaction ledger, specialist payouts settlement, and MRR metrics. |
 
-> 💡 **Role Switcher in Header:** When `VITE_DEMO_MODE=true`, you can use the dropdown in the top navigation bar to switch between Sara, Dr. Mona, and the Admin instantly without re-typing credentials.
+> 💡 **Role Switcher in Header:** When `VITE_DEMO_MODE=true`, you can use the dropdown in the top navigation bar to switch between Sara, Dr. Mona, Admin, Org Admin, and Org Member instantly without re-typing credentials.
+
+---
+
+## 🏢 Organizations (B2B)
+
+Rebound operates a unified multi-tenant model serving both direct consumers (**B2C**) and corporate/institutional partners (**B2B**) from a single codebase and database.
+
+### 1. The Core Architecture Model
+- **One Unified Platform:** Individual members (`organization_id = NULL`) and organization members (`organization_id = <org_id>`) share the same core user tables and experience.
+- **Sponsored Membership:** When an individual registers through an organization using an 8-character invite code (e.g., `APEX2026`), their subscription is created with `source = 'organization'` and price `0 EGP`. They skip payment inputs during booking checkout.
+- **The Assignment Link (`care_team`):** Both B2C and B2B utilize the `care_team` table (`status = 'active' | 'ended'`) to establish active care relationships between members and specialists:
+  - **B2C:** Individuals browse the public specialist directory and choose platform specialists (`organization_id IS NULL`).
+  - **B2B:** Organization admins assign internal organization specialists to their members across the three pillars: **Move**, **Eat**, and **Recover**.
+  - **Field Rule:** A member can have at most one active specialist per discipline/field.
+
+### 2. User Roles & Visibility Boundaries
+- `client`: Individual consumer or sponsored organization member.
+- `specialist`: Licensed practitioner. Platform specialists have `organization_id = NULL`; organization specialists belong to an organization, are auto-approved, and are excluded from platform payout queues.
+- `org_admin`: Lead administrator of an organization. Manages member seat quotas and specialist assignments.
+- `admin`: Platform-wide administrator. Oversees global users and platform specialist approvals.
+- `finance`: Platform financial officer. Tracks marketplace revenue and specialist payouts (sponsored org sessions are excluded from MRR/transaction feeds).
+
+### 3. Strict Privacy Protection Rule
+Organization administrators have access to operational analytics only:
+- **Exposed to Org Admin:** Seat utilization (`seatsUsed / seatLimit`), aggregate active members count, plans updated count, and assignment linkage counts by pillar (Move, Eat, Recover).
+- **Strictly FORBIDDEN for Org Admin:** Medical diagnoses, pain levels, health questionnaire answers, injuries, meal plans, workout routines, clinical progress notes, and AI plan requests. The org admin screens never display or link to any clinical pages.
+
+### 4. B2B Demo Accounts
+
+All demo accounts share the password: **`demo1234`**
+
+| Email | Role | Organization | Purpose / Key Features |
+|---|---|---|---|
+| `admin@apex.com` | **Org Admin** | Apex Athletic Club | Manages Apex members, assigns specialists, monitors seat capacity (30 seats). |
+| `member1@apex.com` .. `member20@apex.com` | **Client (Org Member)** | Apex Athletic Club | Sponsored members. Assigned to Coach Tarek (Move) and Dr. Salma (Recover). Free booking checkout. |
+| `tarek.org@apex.com` | **Specialist (Move)** | Apex Athletic Club | Auto-approved personal trainer. Has pre-seeded weekday booking slots for Apex members. |
+| `salma.org@apex.com` | **Specialist (Recover)** | Apex Athletic Club | Auto-approved physical therapist. Has pre-seeded weekday booking slots for Apex members. |
+| `sara@demo.com` / `individual@demo.com` | **Client (Individual)** | *None (B2C)* | Self-paying individual client. Books platform specialists. |
+
+- **Apex Athletic Club Invite Code:** `APEX2026`
+
+### 5. Main B2B Routes
+
+| Route | Role | Description |
+|---|---|---|
+| `/join` | Public / Guest | Register as an organization member with an invite code without payment. |
+| `/register-org` | Public / Guest | Register a new organization and generate a unique invite code. |
+| `/app/my-specialists` | Client | View actively assigned care team specialists and book sessions. |
+| `/app/org` | Org Admin | Organization dashboard with seat capacity meter and aggregate usage stats. |
+| `/app/org/members` | Org Admin | Searchable member roster with specialist assignment and unassignment actions. |
+| `/app/org/specialists` | Org Admin | Organization specialist roster with "Add Specialist" modal. |
 
 ---
 

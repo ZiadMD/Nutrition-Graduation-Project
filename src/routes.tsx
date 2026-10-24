@@ -26,6 +26,9 @@ import FinanceOverview from './pages/finance/Overview'
 import FinanceTransactions from './pages/finance/Transactions'
 import FinancePayouts from './pages/finance/Payouts'
 import FinanceSubscriptions from './pages/finance/Subscriptions'
+import OrgDashboard from './pages/org/Dashboard'
+import OrgMembers from './pages/org/Members'
+import OrgSpecialists from './pages/org/Specialists'
 
 const NotFound = () => <NotFoundState full />
 const only = (role: 'Client' | 'Specialist' | 'Admin' | 'Finance' | 'OrgAdmin', C: () => React.JSX.Element) => () => <RoleOnly role={role}><C /></RoleOnly>
@@ -110,10 +113,10 @@ export const router = createBrowserRouter([
       { path: 'finance/transactions', Component: only('Finance', FinanceTransactions) },
       { path: 'finance/payouts', Component: only('Finance', FinancePayouts) },
       { path: 'finance/subscriptions', Component: only('Finance', FinanceSubscriptions) },
-      // Org admin portal routes (placeholders for 5A, fully implemented in 5B)
-      { path: 'org', Component: only('OrgAdmin', () => <div className="p-8"><h1 className="text-2xl font-bold">Organization Dashboard</h1><p className="text-ink-2 mt-2">Org admin portal will be populated in Phase 5B.</p></div>) },
-      { path: 'org/members', Component: only('OrgAdmin', () => <div className="p-8"><h1 className="text-2xl font-bold">Organization Members</h1><p className="text-ink-2 mt-2">Org member management will be populated in Phase 5B.</p></div>) },
-      { path: 'org/specialists', Component: only('OrgAdmin', () => <div className="p-8"><h1 className="text-2xl font-bold">Organization Specialists</h1><p className="text-ink-2 mt-2">Org specialist roster will be populated in Phase 5B.</p></div>) },
+      // Org admin portal routes
+      { path: 'org', Component: only('OrgAdmin', OrgDashboard) },
+      { path: 'org/members', Component: only('OrgAdmin', OrgMembers) },
+      { path: 'org/specialists', Component: only('OrgAdmin', OrgSpecialists) },
     ],
   },
   {
