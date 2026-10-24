@@ -204,6 +204,14 @@ function insertBooking(clientId, specialistId, slotId, packageId, sessionType, p
   ).lastInsertRowid
 }
 
+function insertReview(specialistId, clientId, rating, comment, createdAt) {
+  return run(
+    `INSERT OR REPLACE INTO specialist_reviews (specialist_id, client_id, rating, comment, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [specialistId, clientId, rating, comment, createdAt || toISO(new Date()), createdAt || toISO(new Date())]
+  )
+}
+
 function markSlotBooked(slotId) {
   return run(`UPDATE availability_slots SET is_booked = 1 WHERE id = ?`, [slotId])
 }
@@ -259,6 +267,10 @@ const seedAll = db.transaction(() => {
   const omarId = insertUser({ name: 'Omar Khaled', email: 'omar@demo.com', role: 'client' })
   const lailaId = insertUser({ name: 'Laila Mostafa', email: 'laila@demo.com', role: 'client' })
   const yasinId = insertUser({ name: 'Yasin Nabil', email: 'yasin@demo.com', role: 'client' })
+  const mariamId = insertUser({ name: 'Mariam Adel', email: 'mariam@demo.com', role: 'client' })
+  const ahmedId = insertUser({ name: 'Ahmed Essam', email: 'ahmed@demo.com', role: 'client' })
+  const tarekId = insertUser({ name: 'Tarek Zaki', email: 'tarek@demo.com', role: 'client' })
+  const nouranId = insertUser({ name: 'Nouran Mahmoud', email: 'nouran@demo.com', role: 'client' })
   const adminId = insertUser({ name: 'Admin Team', email: 'admin@demo.com', role: 'admin' })
   const financeId = insertUser({ name: 'Tamer Fahmy', email: 'finance@demo.com', role: 'finance' })
 
@@ -692,6 +704,53 @@ const seedAll = db.transaction(() => {
 
   // Pending payout for Hana: gross 500 EGP, 20% cut (100 EGP), net 400 EGP (Pending)
   insertPayout.run(hanaId, 500, 100, 400, dateStr(-14), dateStr(0), 'pending', 'PAY-HI-9904', null, dateStr(-2) + 'T11:00:00Z')
+
+  // -------------------------------------------------------------------------
+  // 13. Specialist Ratings and Reviews (Verified Clients Anti-Spam Enforced)
+  // -------------------------------------------------------------------------
+  console.log('Creating verified client reviews and ratings...')
+
+  // Establish care_team links for reviewing clients to fulfill the anti-spam eligibility check
+  insertCareTeam(mariamId, monaId)
+  insertCareTeam(mariamId, hanaId)
+  insertCareTeam(ahmedId, monaId)
+  insertCareTeam(ahmedId, hanaId)
+  insertCareTeam(ahmedId, nadaId)
+  insertCareTeam(tarekId, karimId)
+  insertCareTeam(tarekId, youssefId)
+  insertCareTeam(nouranId, karimId)
+  insertCareTeam(nouranId, youssefId)
+  insertCareTeam(yasinId, karimId)
+  insertCareTeam(yasinId, nourId)
+  insertCareTeam(lailaId, nourId)
+
+  // Dr. Mona Fathy reviews
+  insertReview(monaId, saraId, 5, "Dr. Mona changed my entire knee rehab. When my pain spiked to 4/10 on Monday, she adjusted my routine immediately before my workout. Best physical therapist in Cairo!", dateStr(-4) + 'T15:20:00Z')
+  insertReview(monaId, lailaId, 5, "Extremely professional and compassionate. The pain rules gave me the confidence to exercise again without fear of re-injury.", dateStr(-8) + 'T11:45:00Z')
+  insertReview(monaId, mariamId, 5, "Her coordination with my gym coach was seamless. Ten minutes of daily mobility completely fixed my morning hip stiffness.", dateStr(-12) + 'T09:30:00Z')
+  insertReview(monaId, ahmedId, 4, "Great session and very thorough assessment of my shoulder mobility. Practical exercises that fit into a busy day.", dateStr(-15) + 'T18:10:00Z')
+
+  // Coach Karim Adel reviews
+  insertReview(karimId, saraId, 5, "Karim focuses on strict form and sustainable progress. My strength has surged while staying completely injury-free.", dateStr(-5) + 'T14:00:00Z')
+  insertReview(karimId, yasinId, 5, "Tracks my numbers every week and never lets me compromise technique. Truly one of the best strength coaches.", dateStr(-9) + 'T16:20:00Z')
+  insertReview(karimId, tarekId, 5, "Top-tier coaching. Tailors every workout to my recovery capacity and coordinates with my doctor.", dateStr(-13) + 'T12:00:00Z')
+  insertReview(karimId, nouranId, 4, "Great motivation and prompt check-ins when I travel for work. Super supportive coach.", dateStr(-18) + 'T10:15:00Z')
+
+  // Hana Ibrahim, RD reviews
+  insertReview(hanaId, saraId, 5, "Hana made hitting 130g protein effortless with real Egyptian staples like ful, eggs, and lentil soup. No extreme diets!", dateStr(-3) + 'T17:40:00Z')
+  insertReview(hanaId, mariamId, 5, "Down 4 kg in 6 weeks without feeling sluggish or hungry. Her grocery shopping hacks saved me money too.", dateStr(-7) + 'T13:10:00Z')
+  insertReview(hanaId, ahmedId, 5, "Practical sports nutrition advice and realistic portions that match my training days.", dateStr(-11) + 'T19:00:00Z')
+
+  // Dr. Youssef Amin reviews
+  insertReview(youssefId, tarekId, 5, "Fixed my persistent lower back stiffness from desk work. Short, highly effective mobility routines.", dateStr(-6) + 'T10:30:00Z')
+  insertReview(youssefId, nouranId, 5, "Excellent diagnosis and clear instructions. Highly recommend Dr. Youssef for anyone with office posture pain.", dateStr(-14) + 'T11:00:00Z')
+
+  // Coach Nour Salem reviews
+  insertReview(nourId, lailaId, 5, "Empowering workouts for home and gym. She keeps me accountable and celebrates small wins!", dateStr(-5) + 'T12:15:00Z')
+  insertReview(nourId, yasinId, 4, "Solid workouts, great variety, and very approachable attitude.", dateStr(-10) + 'T14:40:00Z')
+
+  // Nada Gamal, RD reviews
+  insertReview(nadaId, ahmedId, 5, "High protein meals tailored to an Egyptian student budget. Amazing recipes!", dateStr(-8) + 'T16:50:00Z')
 
   console.log('Seed complete.')
   console.log(`  sara@demo.com   — client (full data, week 3 of 8)`)

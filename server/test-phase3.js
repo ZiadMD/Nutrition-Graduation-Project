@@ -91,8 +91,13 @@ async function run() {
     const slotsJson = await slotsRes.json()
     assert.strictEqual(slotsRes.status, 200)
     assert.ok(slotsJson.data.slots.length > 2, 'Should have multiple open slots')
-    const testSlot = slotsJson.data.slots[0]
-    const secondSlot = slotsJson.data.slots[1]
+    const testSlot =
+      slotsJson.data.slots.find((s) => new Date(s.startsAt).getTime() - Date.now() > 24 * 3600 * 1000) ||
+      slotsJson.data.slots[0]
+    const secondSlot =
+      slotsJson.data.slots.find(
+        (s) => s.id !== testSlot.id && new Date(s.startsAt).getTime() - Date.now() > 24 * 3600 * 1000
+      ) || slotsJson.data.slots[1]
     ok('GET /api/specialists/:id/slots returns open future slots')
 
     // 6. SIMULTANEOUS BOOKINGS TEST: Exactly one must succeed, one must fail with 409

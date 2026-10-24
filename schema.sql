@@ -246,6 +246,18 @@ CREATE TABLE payouts (
   created_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
+-- Specialist Ratings & Reviews
+CREATE TABLE specialist_reviews (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  specialist_id INTEGER NOT NULL REFERENCES specialists(user_id) ON DELETE CASCADE,
+  client_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  rating        INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment       TEXT,
+  created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  updated_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  UNIQUE (specialist_id, client_id)
+);
+
 -- ---------------------------------------------------------------------
 -- Indexes for the queries the screens run most
 -- ---------------------------------------------------------------------
@@ -259,4 +271,6 @@ CREATE INDEX idx_completions_client_date  ON item_completions (client_id, date);
 CREATE INDEX idx_progress_client_date     ON progress_logs (client_id, date);
 CREATE INDEX idx_notes_client             ON notes (client_id, created_at);
 CREATE INDEX idx_payouts_specialist       ON payouts (specialist_id, status);
+CREATE INDEX idx_reviews_specialist       ON specialist_reviews (specialist_id, rating);
+CREATE INDEX idx_reviews_client           ON specialist_reviews (client_id);
 
