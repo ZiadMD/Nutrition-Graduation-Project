@@ -250,7 +250,7 @@ export default function OrgMembers() {
       <Card className="overflow-hidden">
         {loading ? (
           <div className="p-6">
-            <TableSkeleton rows={6} cols={5} />
+            <TableSkeleton rows={6} />
           </div>
         ) : members.length === 0 ? (
           <div className="p-10">
@@ -495,3 +495,4 @@ export default function OrgMembers() {
     </div>
   )
 }
+

@@ -329,7 +329,7 @@ export default function OrgSpecialists() {
             </div>
           )}
 
-          <Field label="Full Legal Name" required>
+          <Field label="Full Legal Name">
             {(p) => (
               <input
                 {...p}
@@ -342,7 +342,7 @@ export default function OrgSpecialists() {
             )}
           </Field>
 
-          <Field label="Specialist Email" required>
+          <Field label="Specialist Email">
             {(p) => (
               <input
                 {...p}
@@ -356,7 +356,7 @@ export default function OrgSpecialists() {
             )}
           </Field>
 
-          <Field label="Temporary Password" helper="Must be at least 8 characters" required>
+          <Field label="Temporary Password" helper="Must be at least 8 characters">
             {(p) => (
               <PasswordInput
                 {...p}
@@ -367,7 +367,7 @@ export default function OrgSpecialists() {
             )}
           </Field>
 
-          <Field label="Pillar & Discipline" required>
+          <Field label="Pillar & Discipline">
             {(p) => (
               <select
                 {...p}
@@ -498,3 +498,4 @@ export default function OrgSpecialists() {
     </div>
   )
 }
+

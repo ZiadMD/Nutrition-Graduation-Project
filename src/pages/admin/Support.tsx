@@ -408,10 +408,10 @@ export default function AdminSupport() {
                 <span className="text-[12px] font-bold text-ink-2 mr-2">Admin Actions:</span>
                 {selectedTicket.targetUserId && (
                   <Btn
-                    variant="danger"
+                    variant="primary"
                     onClick={() => handleTriggerAction('suspend_user')}
                     disabled={actionLoading}
-                    className="text-[12px] py-1 px-3 min-h-0 inline-flex items-center gap-1.5"
+                    className="text-[12px] py-1 px-3 min-h-0 inline-flex items-center gap-1.5 bg-bad text-white hover:bg-[#852222]"
                   >
                     <UserX size={14} /> Suspend User
                   </Btn>

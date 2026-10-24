@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate, Link, useOutletContext } from 'react-router'
-import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard, Clock, Headset } from 'lucide-react'
+import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard, Clock, Headset, Building2 } from 'lucide-react'
 import { Btn, Card, EmptyState, Wordmark } from '../ui'
 import { LanguageToggle } from '../components/ui/LanguageToggle'
 import { SupportModal } from '../components/support/SupportModal'
@@ -342,7 +342,8 @@ export default function Shell() {
                 Specialist: [['Laila Mostafa reported pain 8/10', '1 h ago'], ['Youssef Nabil reported pain 6/10', 'Yesterday']],
                 Admin: [['3 specialists are waiting for approval', '20 min ago'], ['1 account was suspended', 'Yesterday']],
                 Finance: [['October payouts ready for review', '1 h ago'], ['New Full Team subscription activated', '3 h ago']],
-              }[role]).map(([t, w]) => (
+                OrgAdmin: [['New members joined with invite code', '1 h ago'], ['Specialist assignment confirmed', 'Yesterday']],
+              }[role] || []).map(([t, w]) => (
                 <div key={t} className="px-3 py-3 rounded-xl hover:bg-paper">
                   <p className="text-[15px] font-semibold">{t}</p>
                   <p className="text-[14px] text-ink-2">{w}</p>

@@ -1062,8 +1062,8 @@ export function RegisterOrg() {
       })
       setCreatedOrg({
         name: res.organization.name,
-        inviteCode: res.organization.inviteCode,
-        seatLimit: res.organization.seatLimit,
+        inviteCode: res.organization.inviteCode || '',
+        seatLimit: res.organization.seatLimit || 50,
       })
     } catch (error: any) {
       setErr({
