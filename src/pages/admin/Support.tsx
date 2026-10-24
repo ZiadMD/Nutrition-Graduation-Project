@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  LifeBuoy,
+  Headset,
   AlertTriangle,
   Clock,
   CheckCircle2,
@@ -345,12 +345,17 @@ export default function AdminSupport() {
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-line bg-paper">
               <div className="flex items-center gap-3">
-                <span className="num font-extrabold text-[18px]">
-                  {selectedTicket.ticketNumber}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-sand text-ink">
-                  {selectedTicket.category.replace('_', ' ')}
-                </span>
+                <div className="size-10 rounded-xl bg-move-tint text-move grid place-items-center">
+                  <Headset size={20} />
+                </div>
+                <div>
+                  <span className="num font-extrabold text-[18px]">
+                    {selectedTicket.ticketNumber}
+                  </span>
+                  <span className="ml-2 px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-sand text-ink">
+                    {selectedTicket.category.replace('_', ' ')}
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => setSelectedTicketId(null)}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import {
   X,
-  LifeBuoy,
+  Headset,
   Send,
   MessageSquare,
   AlertCircle,
@@ -157,7 +157,7 @@ export function SupportModal({
         <div className="flex items-center justify-between p-5 border-b border-line bg-paper">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-move-tint text-move grid place-items-center">
-              <LifeBuoy size={20} />
+              <Headset size={20} />
             </div>
             <div>
               <h3 className="h-display text-[20px] leading-tight">

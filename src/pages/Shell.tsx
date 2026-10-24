@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate, Link, useOutletContext } from 'react-router'
-import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard, Clock, LifeBuoy } from 'lucide-react'
+import { Bell, CalendarDays, ClipboardList, House, LineChart, Menu, Sparkles, Users, X, LogOut, Settings, UserRound, LayoutDashboard, ShieldCheck, Contact, Coins, ReceiptText, CreditCard, Clock, Headset } from 'lucide-react'
 import { Btn, Card, EmptyState, Wordmark } from '../ui'
 import { LanguageToggle } from '../components/ui/LanguageToggle'
 import { SupportModal } from '../components/support/SupportModal'
@@ -31,7 +31,7 @@ const getNavItems = (t: (key: string) => string) => ({
     { to: '/app/overview', label: t('nav.overview'), Icon: LayoutDashboard },
     { to: '/app/users', label: t('nav.users'), Icon: Users },
     { to: '/app/approvals', label: t('nav.approvals'), Icon: ShieldCheck },
-    { to: '/app/admin/support', label: t('nav.support'), Icon: LifeBuoy },
+    { to: '/app/admin/support', label: t('nav.support'), Icon: Headset },
   ],
   Finance: [
     { to: '/app/finance/overview', label: t('nav.overview'), Icon: LayoutDashboard },
@@ -239,7 +239,7 @@ export default function Shell() {
               aria-label={t('support.modal_title')}
               className="relative size-11 grid place-items-center rounded-xl bg-white border border-line hover:bg-paper cursor-pointer text-ink transition"
             >
-              <LifeBuoy size={20} />
+              <Headset size={20} />
             </button>
             <button
               onClick={() => { setBell(!bell); setMenu(false) }}
@@ -303,7 +303,7 @@ export default function Shell() {
                   setSupportModalOpen(true)
                 }}
               >
-                <LifeBuoy size={18} aria-hidden /> {t('support.modal_title')}
+                <Headset size={18} aria-hidden /> {t('support.modal_title')}
               </button>
               <button className="w-full min-h-11 px-3 rounded-xl flex items-center gap-3 font-semibold hover:bg-paper cursor-pointer" onClick={() => { api.logout(); go('/login') }}>
                 <LogOut size={18} aria-hidden /> {t('nav.logout')}
@@ -380,7 +380,7 @@ export default function Shell() {
                   setSupportModalOpen(true)
                 }}
               >
-                <LifeBuoy size={20} aria-hidden /> {t('support.modal_title')}
+                <Headset size={20} aria-hidden /> {t('support.modal_title')}
               </button>
             </div>
 
