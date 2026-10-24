@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url'
 import { join, dirname } from 'node:path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const DB_PATH = join(__dirname, '../../data/rebound.db')
+const defaultDbPath = join(__dirname, '../../data/rebound.db')
+const DB_PATH = process.env.DB_PATH || defaultDbPath
 const CONTENT = join(__dirname, '../../seed-content')
 
 const db = new Database(DB_PATH)

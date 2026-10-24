@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "format": "oxfmt",
-    "db:reset": "node server/src/db/reset.js"
+    "db:reset": "node server/src/db/reset.js",
+    "db:seed:history": "node server/src/db/seedHistory.js",
+    "db:demo": "npm run db:reset && npm run db:seed:history",
+    "analytics:check": "node server/src/analytics/check.js"
   },
   "dependencies": {
     "lucide-react": "^1.56.0",

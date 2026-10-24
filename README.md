@@ -64,11 +64,24 @@ The repository includes pre-configured environment files:
   ```
 
 ### 4. Initialize / Reset the Database
-Seed the SQLite database with rich demo data:
+We provide two database seed options:
+
+#### A. Base Seed (For automated test suites and initial clean state)
 ```bash
 npm run db:reset
 ```
-*You can run this anytime to restore a clean demo state.*
+*Seeds the core 6 platform specialists, Sara, Apex Athletic Club (20 members), and verifies all baseline business logic.*
+
+#### B. Rich 90-Day Analytics Demo Seed (For Power BI style analytical dashboards)
+```bash
+npm run db:demo
+```
+*Applies base seed plus a realistic 90-day backdated history with multiple organizations (Cairo University Sports, Delta Tech Solutions, Giza CrossFit Studio), 40 B2C individuals, 4 behavioral personas (highly engaged, steady, drifting, dormant), support tickets, and bookings.*
+
+To inspect the calculated analytical metrics directly from the CLI across all scopes:
+```bash
+npm run analytics:check
+```
 
 ### 5. Start the Application
 Run both frontend and backend concurrently with a single command:
@@ -124,19 +137,26 @@ Organization administrators have access to operational analytics only:
 - **Exposed to Org Admin:** Seat utilization (`seatsUsed / seatLimit`), aggregate active members count, plans updated count, and assignment linkage counts by pillar (Move, Eat, Recover).
 - **Strictly FORBIDDEN for Org Admin:** Medical diagnoses, pain levels, health questionnaire answers, injuries, meal plans, workout routines, clinical progress notes, and AI plan requests. The org admin screens never display or link to any clinical pages.
 
-### 4. B2B Demo Accounts
+### 4. B2B & Analytics Demo Accounts
 
 All demo accounts share the password: **`demo1234`**
 
 | Email | Role | Organization | Purpose / Key Features |
 |---|---|---|---|
-| `admin@apex.com` | **Org Admin** | Apex Athletic Club | Manages Apex members, assigns specialists, monitors seat capacity (30 seats). |
+| `admin@apex.com` | **Org Admin** | Apex Athletic Club | Base Org Admin (30 seats, 20 members). Code: `APEX2026`. |
+| `admin@cu.edu.eg` | **Org Admin** | Cairo University Sports | Large B2B Org (60 seats, 35 members). Multi-specialist sports team. Code: `CUSP2026`. |
+| `admin@delta.com` | **Org Admin** | Delta Tech Solutions | Corporate B2B Org (40 seats, 8 members). Sedentary/office worker wellness. Code: `DELT2026`. |
+| `admin@giza.com` | **Org Admin** | Giza CrossFit Studio | Tiny B2B Org (15 seats, 4 members). **Demonstrates strict privacy suppression (`MIN_COHORT = 5`)**. Code: `GIZA2026`. |
 | `member1@apex.com` .. `member20@apex.com` | **Client (Org Member)** | Apex Athletic Club | Sponsored members. Assigned to Coach Tarek (Move) and Dr. Salma (Recover). Free booking checkout. |
 | `tarek.org@apex.com` | **Specialist (Move)** | Apex Athletic Club | Auto-approved personal trainer. Has pre-seeded weekday booking slots for Apex members. |
 | `salma.org@apex.com` | **Specialist (Recover)** | Apex Athletic Club | Auto-approved physical therapist. Has pre-seeded weekday booking slots for Apex members. |
+| `b2c.user1@demo.com` .. `b2c.user40@demo.com` | **Client (B2C)** | *None (B2C)* | 40 Individual B2C consumers across 4 engagement personas with active subscriptions. |
 | `sara@demo.com` / `individual@demo.com` | **Client (Individual)** | *None (B2C)* | Self-paying individual client. Books platform specialists. |
 
 - **Apex Athletic Club Invite Code:** `APEX2026`
+- **Cairo University Sports Invite Code:** `CUSP2026`
+- **Delta Tech Solutions Invite Code:** `DELT2026`
+- **Giza CrossFit Studio Invite Code:** `GIZA2026`
 
 ### 5. Main B2B Routes
 
@@ -244,8 +264,18 @@ Refer to [`TEST_CHECKLIST.md`](./TEST_CHECKLIST.md) for step-by-step UI validati
 | Command | Action |
 |---|---|
 | `npm run dev` | Runs both the Vite frontend and Express server concurrently. |
-| `npm run db:reset` | Resets the SQLite database and re-seeds all demo data from scratch. |
+| `npm run db:reset` | Resets the SQLite database and re-seeds base demo data (used for all test suites). |
+| `npm run db:seed:history` | Seeds 90 days of backdated historical trends and multiple B2B orgs. |
+| `npm run db:demo` | Chains `db:reset` and `db:seed:history` for complete Power BI style demo analytics. |
+| `npm run analytics:check` | CLI inspection script computing analytical metrics across all scopes. |
 | `npm run build` | Compiles TypeScript and creates an optimized production bundle in `dist/`. |
 | `npm run preview` | Previews the production build locally. |
 | `npm run format` | Checks code formatting via `oxfmt`. |
+
+---
+
+## 📊 Analytics & Reporting Reference
+For complete documentation of analytical formulas, metrics definitions, timezone rules (Cairo UTC+2 / Saturday week start), and strict privacy cohort suppression (`MIN_COHORT = 5`), see:
+- [`docs/analytics-definitions.md`](./docs/analytics-definitions.md)
+
 

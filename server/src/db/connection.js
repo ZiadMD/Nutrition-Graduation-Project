@@ -9,7 +9,8 @@ import { join, dirname } from 'node:path'
 // Resolve the path to the data folder relative to this file, not the
 // working directory — so it works no matter where you run the server from.
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const DB_PATH = join(__dirname, '../../data/rebound.db')
+const defaultDbPath = join(__dirname, '../../data/rebound.db')
+const DB_PATH = process.env.DB_PATH || defaultDbPath
 
 const db = new Database(DB_PATH)
 

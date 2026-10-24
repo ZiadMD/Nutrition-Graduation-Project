@@ -336,3 +336,15 @@ CREATE INDEX idx_care_team_specialist     ON care_team (specialist_id, status);
 CREATE INDEX idx_users_org                ON users (organization_id);
 CREATE INDEX idx_specialists_org          ON specialists (organization_id);
 
+-- Analytics & timeseries range query indexes
+CREATE INDEX idx_completions_date         ON item_completions (date);
+CREATE INDEX idx_progress_date            ON progress_logs (date);
+CREATE INDEX idx_bookings_created_at      ON bookings (created_at);
+CREATE INDEX idx_bookings_slot            ON bookings (slot_id, status);
+CREATE INDEX idx_slots_starts_at          ON availability_slots (starts_at);
+CREATE INDEX idx_users_created_at         ON users (created_at, role);
+CREATE INDEX idx_plans_updated_at         ON plans (updated_at, status);
+CREATE INDEX idx_care_team_created_at     ON care_team (created_at, status);
+CREATE INDEX idx_subscriptions_created_at ON subscriptions (created_at, source, status);
+CREATE INDEX idx_tickets_resolved_at      ON support_tickets (resolved_at, created_at);
+
