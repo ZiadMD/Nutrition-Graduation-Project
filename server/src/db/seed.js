@@ -212,6 +212,54 @@ function insertReview(specialistId, clientId, rating, comment, createdAt) {
   )
 }
 
+function insertSupportTicket({
+  ticketNumber,
+  reporterId,
+  category,
+  priority = 'medium',
+  status = 'open',
+  subject,
+  description,
+  bookingId = null,
+  targetUserId = null,
+  assignedTo = null,
+  resolutionNote = null,
+  resolvedAt = null,
+  createdAt = null,
+}) {
+  const ts = createdAt || toISO(new Date())
+  return run(
+    `INSERT INTO support_tickets 
+     (ticket_number, reporter_id, category, priority, status, subject, description, booking_id, target_user_id, assigned_to, resolution_note, resolved_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      ticketNumber,
+      reporterId,
+      category,
+      priority,
+      status,
+      subject,
+      description,
+      bookingId,
+      targetUserId,
+      assignedTo,
+      resolutionNote,
+      resolvedAt,
+      ts,
+      ts,
+    ]
+  ).lastInsertRowid
+}
+
+function insertTicketMessage(ticketId, senderId, message, isInternal = 0, createdAt = null) {
+  const ts = createdAt || toISO(new Date())
+  return run(
+    `INSERT INTO ticket_messages (ticket_id, sender_id, message, is_internal, created_at)
+     VALUES (?, ?, ?, ?, ?)`,
+    [ticketId, senderId, message, isInternal ? 1 : 0, ts]
+  ).lastInsertRowid
+}
+
 function markSlotBooked(slotId) {
   return run(`UPDATE availability_slots SET is_booked = 1 WHERE id = ?`, [slotId])
 }
@@ -751,6 +799,73 @@ const seedAll = db.transaction(() => {
 
   // Nada Gamal, RD reviews
   insertReview(nadaId, ahmedId, 5, "High protein meals tailored to an Egyptian student budget. Amazing recipes!", dateStr(-8) + 'T16:50:00Z')
+
+  // -------------------------------------------------------------------------
+  // 14. Customer Support Tickets & Incident Reports
+  // -------------------------------------------------------------------------
+  console.log('Creating customer support tickets and reports...')
+
+  // Ticket 1: Session dispute (Urgent, in progress)
+  const t1 = insertSupportTicket({
+    ticketNumber: 'TICK-8021',
+    reporterId: lailaId,
+    category: 'session_dispute',
+    priority: 'urgent',
+    status: 'in_progress',
+    subject: 'Video session disconnected at 15 minutes',
+    description: 'During our rehab follow-up, the video room froze and we could not reconnect. Need to reschedule the remaining time.',
+    targetUserId: monaId,
+    assignedTo: adminId,
+    createdAt: dateStr(-1) + 'T14:30:00Z',
+  })
+  insertTicketMessage(t1, lailaId, 'During our rehab follow-up, the video room froze and we could not reconnect. Need to reschedule the remaining time.', 0, dateStr(-1) + 'T14:30:00Z')
+  insertTicketMessage(t1, adminId, 'Hello Laila, we apologize for the network disruption. We reviewed the session logs and have notified Dr. Mona to arrange a complimentary makeup check-in.', 0, dateStr(-1) + 'T15:15:00Z')
+  insertTicketMessage(t1, adminId, 'Verified WebRTC disconnection in server logs. Free makeup session token approved.', 1, dateStr(-1) + 'T15:16:00Z')
+
+  // Ticket 2: Billing & Subscription Inquiry (Open)
+  const t2 = insertSupportTicket({
+    ticketNumber: 'TICK-8022',
+    reporterId: saraId,
+    category: 'billing_refund',
+    priority: 'medium',
+    status: 'open',
+    subject: 'Inquiry regarding pausing my Full Team subscription',
+    description: 'I will be traveling outside Egypt for 10 days next month. Can I pause my active Full Team subscription and resume without losing my care team?',
+    assignedTo: adminId,
+    createdAt: dateStr(-2) + 'T11:00:00Z',
+  })
+  insertTicketMessage(t2, saraId, 'I will be traveling outside Egypt for 10 days next month. Can I pause my active Full Team subscription and resume without losing my care team?', 0, dateStr(-2) + 'T11:00:00Z')
+
+  // Ticket 3: Conduct report (High, open)
+  const t3 = insertSupportTicket({
+    ticketNumber: 'TICK-8023',
+    reporterId: omarId,
+    category: 'specialist_conduct',
+    priority: 'high',
+    status: 'open',
+    subject: 'Specialist joined 20 minutes late with no notice',
+    description: 'The specialist joined 20 minutes late with no prior warning and rushed through my routine questions.',
+    targetUserId: karimId,
+    createdAt: dateStr(-3) + 'T16:00:00Z',
+  })
+  insertTicketMessage(t3, omarId, 'The specialist joined 20 minutes late with no prior warning and rushed through my routine questions.', 0, dateStr(-3) + 'T16:00:00Z')
+
+  // Ticket 4: General inquiry & Fawry verification (Resolved)
+  const t4 = insertSupportTicket({
+    ticketNumber: 'TICK-8024',
+    reporterId: yasinId,
+    category: 'general_inquiry',
+    priority: 'low',
+    status: 'resolved',
+    subject: 'Fawry payment confirmation receipt',
+    description: 'Paid for Starter plan at a Fawry kiosk yesterday. Want to confirm reference code was acknowledged.',
+    assignedTo: adminId,
+    resolutionNote: 'Fawry transaction matched in bank reconciliation. Plan confirmed active.',
+    resolvedAt: dateStr(-1) + 'T10:00:00Z',
+    createdAt: dateStr(-4) + 'T09:30:00Z',
+  })
+  insertTicketMessage(t4, yasinId, 'Paid for Starter plan at a Fawry kiosk yesterday. Want to confirm reference code was acknowledged.', 0, dateStr(-4) + 'T09:30:00Z')
+  insertTicketMessage(t4, adminId, 'Hello Yasin, your payment reference has been reconciled successfully. Your subscription is active and all features are unlocked!', 0, dateStr(-1) + 'T10:00:00Z')
 
   console.log('Seed complete.')
   console.log(`  sara@demo.com   — client (full data, week 3 of 8)`)

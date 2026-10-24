@@ -258,6 +258,42 @@ CREATE TABLE specialist_reviews (
   UNIQUE (specialist_id, client_id)
 );
 
+-- Support Tickets and Incident Reports
+CREATE TABLE support_tickets (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  ticket_number   TEXT NOT NULL UNIQUE,
+  reporter_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  category        TEXT NOT NULL CHECK (category IN (
+                    'session_dispute',
+                    'specialist_conduct',
+                    'client_conduct',
+                    'billing_refund',
+                    'technical_issue',
+                    'general_inquiry'
+                  )),
+  priority        TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+  status          TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+  subject         TEXT NOT NULL,
+  description     TEXT NOT NULL,
+  booking_id      INTEGER REFERENCES bookings(id) ON DELETE SET NULL,
+  target_user_id  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  assigned_to     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  resolution_note TEXT,
+  resolved_at     TEXT,
+  created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);
+
+-- Message Thread for Each Support Ticket
+CREATE TABLE ticket_messages (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  ticket_id   INTEGER NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+  sender_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  message     TEXT NOT NULL,
+  is_internal INTEGER NOT NULL DEFAULT 0 CHECK (is_internal IN (0, 1)),
+  created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);
+
 -- ---------------------------------------------------------------------
 -- Indexes for the queries the screens run most
 -- ---------------------------------------------------------------------
@@ -273,4 +309,8 @@ CREATE INDEX idx_notes_client             ON notes (client_id, created_at);
 CREATE INDEX idx_payouts_specialist       ON payouts (specialist_id, status);
 CREATE INDEX idx_reviews_specialist       ON specialist_reviews (specialist_id, rating);
 CREATE INDEX idx_reviews_client           ON specialist_reviews (client_id);
+CREATE INDEX idx_tickets_reporter         ON support_tickets (reporter_id, status);
+CREATE INDEX idx_tickets_status           ON support_tickets (status, priority);
+CREATE INDEX idx_tickets_category         ON support_tickets (category);
+CREATE INDEX idx_messages_ticket          ON ticket_messages (ticket_id, created_at);
 

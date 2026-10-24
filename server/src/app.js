@@ -42,6 +42,7 @@ import aiRoutes from './routes/ai.js'
 import checkoutRoutes from './routes/checkout.js'
 import adminRoutes from './routes/admin.js'
 import financeRoutes from './routes/finance.js'
+import supportRoutes from './routes/support.js'
 
 app.use('/api/auth', authRoutes)
 app.use('/api/profile', profileRoutes)
@@ -56,6 +57,7 @@ app.use('/api/ai', aiRoutes)
 app.use('/api/checkout', checkoutRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/finance', financeRoutes)
+app.use('/api/support', supportRoutes)
 
 // ── 404 catch-all ───────────────────────────────────────────────────────────
 // Any request that reaches here didn't match a real route.
