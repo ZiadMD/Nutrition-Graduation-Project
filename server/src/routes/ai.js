@@ -114,11 +114,25 @@ router.post('/plan/:id/send', (req, res) => {
 
   const planIds = []
 
+  const findAssignedSpecialist = (service) => {
+    const typeMap = { move: 'trainer', eat: 'nutritionist', recover: 'physical_therapist' }
+    const row = db
+      .prepare(
+        `SELECT sp.user_id 
+         FROM care_team ct
+         JOIN specialists sp ON sp.user_id = ct.specialist_id
+         WHERE ct.client_id = ? AND ct.status = 'active' AND sp.type = ?
+         LIMIT 1`
+      )
+      .get(clientId, typeMap[service])
+    return row ? row.user_id : null
+  }
+
   const sendTransaction = db.transaction(() => {
     // 1. Move Plan
     const insertPlan = db.prepare(
       `INSERT INTO plans (client_id, service, author_id, source, status, title, summary)
-       VALUES (?, ?, NULL, 'ai', 'draft', ?, ?)`
+       VALUES (?, ?, ?, 'ai', 'draft', ?, ?)`
     )
 
     const insertPlanItem = db.prepare(
@@ -128,7 +142,8 @@ router.post('/plan/:id/send', (req, res) => {
     )
 
     // Move Plan
-    const moveRes = insertPlan.run(clientId, 'move', 'AI Draft: Movement Plan', draft.summary || 'AI-generated training routine')
+    const moveAuthor = findAssignedSpecialist('move')
+    const moveRes = insertPlan.run(clientId, 'move', moveAuthor, 'AI Draft: Movement Plan', draft.summary || 'AI-generated training routine')
     const movePlanId = Number(moveRes.lastInsertRowid)
     planIds.push(movePlanId)
 
@@ -157,7 +172,8 @@ router.post('/plan/:id/send', (req, res) => {
     })
 
     // Eat Plan
-    const eatRes = insertPlan.run(clientId, 'eat', 'AI Draft: Nutrition Plan', draft.summary || 'AI-generated meal guidelines')
+    const eatAuthor = findAssignedSpecialist('eat')
+    const eatRes = insertPlan.run(clientId, 'eat', eatAuthor, 'AI Draft: Nutrition Plan', draft.summary || 'AI-generated meal guidelines')
     const eatPlanId = Number(eatRes.lastInsertRowid)
     planIds.push(eatPlanId)
 
@@ -186,7 +202,8 @@ router.post('/plan/:id/send', (req, res) => {
     })
 
     // Recover Plan
-    const recoverRes = insertPlan.run(clientId, 'recover', 'AI Draft: Recovery Plan', draft.summary || 'AI-generated rehab and mobility')
+    const recoverAuthor = findAssignedSpecialist('recover')
+    const recoverRes = insertPlan.run(clientId, 'recover', recoverAuthor, 'AI Draft: Recovery Plan', draft.summary || 'AI-generated rehab and mobility')
     const recoverPlanId = Number(recoverRes.lastInsertRowid)
     planIds.push(recoverPlanId)
 

@@ -83,12 +83,12 @@ router.get('/', (req, res) => {
         FROM (
           SELECT client_id FROM bookings WHERE specialist_id = u.id AND status IN ('confirmed', 'completed')
           UNION
-          SELECT client_id FROM care_team WHERE specialist_id = u.id
+          SELECT client_id FROM care_team WHERE specialist_id = u.id AND status = 'active'
         )
       ) AS distinct_clients_count
     FROM specialists s
     JOIN users u ON u.id = s.user_id
-    WHERE s.approval_status = 'approved' AND u.status = 'active'
+    WHERE s.approval_status = 'approved' AND u.status = 'active' AND s.organization_id IS NULL
   `
   const params = []
 
@@ -184,13 +184,43 @@ function resolveSpecialistId(param) {
   return row ? row.id : null
 }
 
+function getSpecialistIfAccessible(specialistId, user) {
+  if (!specialistId) return null
+  const spec = db
+    .prepare(
+      `SELECT s.user_id, s.organization_id, s.approval_status, u.status
+       FROM specialists s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.user_id = ?`
+    )
+    .get(specialistId)
+
+  if (!spec || spec.approval_status !== 'approved' || spec.status !== 'active') {
+    return null
+  }
+
+  // If platform specialist, accessible to anyone
+  if (spec.organization_id === null || spec.organization_id === undefined) {
+    return spec
+  }
+
+  // If org specialist, must return 404 to anyone who is not a member of that same organization
+  const callerOrgId = user?.organizationId || user?.organization_id || null
+  if (!callerOrgId || callerOrgId !== spec.organization_id) {
+    return null
+  }
+
+  return spec
+}
+
 /**
  * GET /api/specialists/:id
  * Returns a single specialist's profile, next available slot, and packages.
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', optionalAuth, (req, res) => {
   const specialistId = resolveSpecialistId(req.params.id)
-  if (!specialistId) {
+  const spec = getSpecialistIfAccessible(specialistId, req.user)
+  if (!spec) {
     return res.status(404).json({ error: { code: 'SPECIALIST_NOT_FOUND', message: 'Specialist not found.' } })
   }
 
@@ -234,7 +264,7 @@ router.get('/:id', (req, res) => {
           FROM (
             SELECT client_id FROM bookings WHERE specialist_id = u.id AND status IN ('confirmed', 'completed')
             UNION
-            SELECT client_id FROM care_team WHERE specialist_id = u.id
+            SELECT client_id FROM care_team WHERE specialist_id = u.id AND status = 'active'
           )
         ) AS distinct_clients_count
       FROM specialists s
@@ -281,9 +311,10 @@ router.get('/:id', (req, res) => {
  * Returns open, future availability slots for a specialist.
  * Query params: ?from=&to= (ISO date or date-time strings)
  */
-router.get('/:id/slots', (req, res) => {
+router.get('/:id/slots', optionalAuth, (req, res) => {
   const specialistId = resolveSpecialistId(req.params.id)
-  if (!specialistId) {
+  const spec = getSpecialistIfAccessible(specialistId, req.user)
+  if (!spec) {
     return res.status(404).json({ error: { code: 'SPECIALIST_NOT_FOUND', message: 'Specialist not found.' } })
   }
 
@@ -329,7 +360,8 @@ const reviewSchema = z.object({
  */
 router.get('/:id/reviews', optionalAuth, (req, res) => {
   const specialistId = resolveSpecialistId(req.params.id)
-  if (!specialistId) {
+  const spec = getSpecialistIfAccessible(specialistId, req.user)
+  if (!spec) {
     return res.status(404).json({ error: { code: 'SPECIALIST_NOT_FOUND', message: 'Specialist not found.' } })
   }
 
@@ -366,7 +398,7 @@ router.get('/:id/reviews', optionalAuth, (req, res) => {
       `SELECT COUNT(DISTINCT client_id) AS cnt FROM (
         SELECT client_id FROM bookings WHERE specialist_id = ? AND status IN ('confirmed', 'completed')
         UNION
-        SELECT client_id FROM care_team WHERE specialist_id = ?
+        SELECT client_id FROM care_team WHERE specialist_id = ? AND status = 'active'
       )`
     )
     .get(specialistId, specialistId)
@@ -406,7 +438,7 @@ router.get('/:id/reviews', optionalAuth, (req, res) => {
       const inCareTeam = db
         .prepare(
           `SELECT 1 FROM care_team 
-           WHERE client_id = ? AND specialist_id = ?
+           WHERE client_id = ? AND specialist_id = ? AND status = 'active'
            LIMIT 1`
         )
         .get(clientId, specialistId)
@@ -456,7 +488,8 @@ router.get('/:id/reviews', optionalAuth, (req, res) => {
  */
 router.post('/:id/reviews', requireAuth, requireRole('client'), validate(reviewSchema), (req, res) => {
   const specialistId = resolveSpecialistId(req.params.id)
-  if (!specialistId) {
+  const spec = getSpecialistIfAccessible(specialistId, req.user)
+  if (!spec) {
     return res.status(404).json({ error: { code: 'SPECIALIST_NOT_FOUND', message: 'Specialist not found.' } })
   }
 
@@ -474,7 +507,7 @@ router.post('/:id/reviews', requireAuth, requireRole('client'), validate(reviewS
   const inCareTeam = db
     .prepare(
       `SELECT 1 FROM care_team 
-       WHERE client_id = ? AND specialist_id = ?
+       WHERE client_id = ? AND specialist_id = ? AND status = 'active'
        LIMIT 1`
     )
     .get(clientId, specialistId)

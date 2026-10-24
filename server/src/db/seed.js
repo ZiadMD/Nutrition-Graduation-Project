@@ -68,10 +68,17 @@ function run(sql, params = []) {
   return db.prepare(sql).run(params)
 }
 
-function insertUser({ name, email, role }) {
+function insertUser({ name, email, role, organizationId = null }) {
   return run(
-    `INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)`,
-    [name, email, DEMO_PW, role]
+    `INSERT INTO users (name, email, password_hash, role, organization_id) VALUES (?, ?, ?, ?, ?)`,
+    [name, email, DEMO_PW, role, organizationId]
+  ).lastInsertRowid
+}
+
+function insertOrganization({ name, type, logoUrl = null, inviteCode, seatLimit }) {
+  return run(
+    `INSERT INTO organizations (name, type, logo_url, invite_code, seat_limit) VALUES (?, ?, ?, ?, ?)`,
+    [name, type, logoUrl, inviteCode, seatLimit]
   ).lastInsertRowid
 }
 
@@ -84,15 +91,16 @@ function insertClientProfile(userId, fields) {
   )
 }
 
-function insertSpecialist(userId, fields) {
+function insertSpecialist(userId, fields, organizationId = null) {
   return run(
     `INSERT INTO specialists
-       (user_id, type, credentials, bio, focus_tags, photo_url, city,
+       (user_id, organization_id, type, credentials, bio, focus_tags, photo_url, city,
         years_experience, languages, rate_egp, sessions_completed,
         approval_status, credential_doc)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       userId,
+      organizationId,
       fields.type,
       fields.credentials,
       fields.bio,
@@ -125,10 +133,11 @@ function insertSlot(specialistId, startsAt, endsAt) {
   ).lastInsertRowid
 }
 
-function insertCareTeam(clientId, specialistId) {
+function insertCareTeam(clientId, specialistId, status = 'active') {
   return run(
-    `INSERT OR IGNORE INTO care_team (client_id, specialist_id) VALUES (?, ?)`,
-    [clientId, specialistId]
+    `INSERT INTO care_team (client_id, specialist_id, status) VALUES (?, ?, ?)
+     ON CONFLICT(client_id, specialist_id) DO UPDATE SET status = excluded.status, ended_at = NULL`,
+    [clientId, specialistId, status]
   )
 }
 
@@ -709,14 +718,14 @@ const seedAll = db.transaction(() => {
   console.log('Creating subscriptions and financial records...')
 
   const insertSub = db.prepare(`
-    INSERT INTO subscriptions (client_id, plan_name, price_egp, method, status, reference, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO subscriptions (client_id, plan_name, price_egp, method, status, source, reference, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
-  insertSub.run(saraId, 'Full Team', 1499, 'instapay', 'active', 'SUB-FT-8821', dateStr(-21) + 'T10:00:00Z')
-  insertSub.run(omarId, 'Starter', 399, 'card', 'active', 'SUB-ST-4029', dateStr(-14) + 'T12:30:00Z')
-  insertSub.run(lailaId, 'Plus', 899, 'vodafone_cash', 'active', 'SUB-PL-1920', dateStr(-10) + 'T14:15:00Z')
-  insertSub.run(yasinId, 'Full Team', 1499, 'card', 'active', 'SUB-FT-5510', dateStr(-5) + 'T09:45:00Z')
+  insertSub.run(saraId, 'Full Team', 1499, 'instapay', 'active', 'self', 'SUB-FT-8821', dateStr(-21) + 'T10:00:00Z')
+  insertSub.run(omarId, 'Starter', 399, 'card', 'active', 'self', 'SUB-ST-4029', dateStr(-14) + 'T12:30:00Z')
+  insertSub.run(lailaId, 'Plus', 899, 'vodafone_cash', 'active', 'self', 'SUB-PL-1920', dateStr(-10) + 'T14:15:00Z')
+  insertSub.run(yasinId, 'Full Team', 1499, 'card', 'active', 'self', 'SUB-FT-5510', dateStr(-5) + 'T09:45:00Z')
 
   // Additional completed booking for Laila with Dr. Mona
   const pastSlot3StartsAt = pastSlotStartsAt(3)
@@ -867,19 +876,250 @@ const seedAll = db.transaction(() => {
   insertTicketMessage(t4, yasinId, 'Paid for Starter plan at a Fawry kiosk yesterday. Want to confirm reference code was acknowledged.', 0, dateStr(-4) + 'T09:30:00Z')
   insertTicketMessage(t4, adminId, 'Hello Yasin, your payment reference has been reconciled successfully. Your subscription is active and all features are unlocked!', 0, dateStr(-1) + 'T10:00:00Z')
 
+  // -------------------------------------------------------------------------
+  // 14. B2B Organization, Org Admin, Org Specialists, Org Members & Assignments
+  // -------------------------------------------------------------------------
+  console.log('Seeding B2B Organization (Apex Athletic Club)...')
+
+  // 1. Create Organization
+  const apexOrgId = insertOrganization({
+    name: 'Apex Athletic Club',
+    type: 'gym',
+    logoUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=400&q=80',
+    inviteCode: 'APEX2026',
+    seatLimit: 30,
+  })
+
+  // 2. Org Admin
+  const apexAdminId = insertUser({
+    name: 'Apex Org Admin',
+    email: 'admin@apex.com',
+    role: 'org_admin',
+    organizationId: apexOrgId,
+  })
+
+  // 3. Org Specialists (2 specialists, auto-approved, rate_egp 0, organization_id set)
+  // Specialist 1: Trainer (Move)
+  const tarekOrgUserId = insertUser({
+    name: 'Coach Tarek Vance',
+    email: 'tarek.org@apex.com',
+    role: 'specialist',
+    organizationId: apexOrgId,
+  })
+  insertSpecialist(tarekOrgUserId, {
+    type: 'trainer',
+    credentials: 'Head Strength & Conditioning Coach, CSCS',
+    bio: 'In-house head coach for Apex Athletic Club. Specializing in functional hypertrophy, speed, and corporate conditioning.',
+    focusTags: 'Strength,Athletic Performance,Conditioning',
+    photoUrl: 'https://images.unsplash.com/photo-1567013127542-490d757e51fc?auto=format&fit=crop&w=900&q=85',
+    city: 'Cairo',
+    yearsExperience: 8,
+    languages: 'Arabic,English',
+    rateEgp: 0,
+    sessionsCompleted: 140,
+    approvalStatus: 'approved',
+    credentialDoc: 'tarek_cscs_cert.pdf',
+  }, apexOrgId)
+
+  // Specialist 2: Physical Therapist (Recover)
+  const salmaOrgUserId = insertUser({
+    name: 'Dr. Salma Rehab, PT',
+    email: 'salma.org@apex.com',
+    role: 'specialist',
+    organizationId: apexOrgId,
+  })
+  insertSpecialist(salmaOrgUserId, {
+    type: 'physical_therapist',
+    credentials: 'DPT, Resident Sports Physical Therapist',
+    bio: 'Dedicated in-house physical therapist at Apex Club managing musculoskeletal injury prevention, spine mobility, and return-to-sport protocols.',
+    focusTags: 'Knee Rehab,Spine Mobility,Posture Correction',
+    photoUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=900&q=85',
+    city: 'Cairo',
+    yearsExperience: 6,
+    languages: 'Arabic,English',
+    rateEgp: 0,
+    sessionsCompleted: 95,
+    approvalStatus: 'approved',
+    credentialDoc: 'salma_dpt_license.pdf',
+  }, apexOrgId)
+
+  // Seed upcoming availability slots for org specialists so org members can book
+  for (const orgSpecId of [tarekOrgUserId, salmaOrgUserId]) {
+    const slots = generateSlots(orgSpecId)
+    for (const s of slots) {
+      insertSlot(orgSpecId, s.startsAt, s.endsAt)
+    }
+  }
+
+  // 4. Org Members (~20 members)
+  const orgMemberNames = [
+    'Karim Mostafa', 'Zeyad Fathy', 'Nour El-Din', 'Hossam Hassan', 'Dalia Samir',
+    'Reem Mansour', 'Sherif Gomaa', 'Farah Ezzat', 'Hatem Soliman', 'Mai Kassem',
+    'Khaled Fawzy', 'Rana Hegazy', 'Tamer Shawky', 'Yara Badawi', 'Mustafa Kamel',
+    'Aya Radwan', 'Bassem Youssef', 'Nadine Wafik', 'Amr Diab', 'Heba Magdy'
+  ]
+
+  const orgMemberIds = []
+  for (let i = 0; i < orgMemberNames.length; i++) {
+    const memName = orgMemberNames[i]
+    const memEmail = `member${i + 1}@apex.com`
+    const memId = insertUser({
+      name: memName,
+      email: memEmail,
+      role: 'client',
+      organizationId: apexOrgId,
+    })
+    orgMemberIds.push(memId)
+
+    // Client profile
+    insertClientProfile(memId, {
+      goal: i % 2 === 0 ? 'build_muscle' : 'lose_fat',
+      days_per_week: (i % 4) + 3,
+      age: 24 + (i % 15),
+      height_cm: 165 + (i % 25),
+      weight_kg: 60 + (i % 35),
+      activity_level: i % 2 === 0 ? 'moderate' : 'active',
+      diet_style: 'high_protein',
+      phone: `010${String(10000000 + i * 3721).slice(0, 8)}`,
+      plan_start_date: dateStr(-14),
+      program_weeks: 8,
+      onboarding_completed: 1,
+    })
+
+    // Sponsored subscription (source = 'organization', price_egp = 0)
+    insertSub.run(
+      memId,
+      'Apex Club Membership',
+      0,
+      'card',
+      'active',
+      'organization',
+      `ORG-APEX-${1000 + i}`,
+      dateStr(-14) + 'T08:00:00Z'
+    )
+  }
+
+  // 5. Active Assignments (care_team with status = 'active')
+  // Members 0..9 assigned to Coach Tarek (Move)
+  for (let i = 0; i < 10; i++) {
+    insertCareTeam(orgMemberIds[i], tarekOrgUserId, 'active')
+  }
+  // Members 10..19 assigned to Dr. Salma (Recover)
+  for (let i = 10; i < 20; i++) {
+    insertCareTeam(orgMemberIds[i], salmaOrgUserId, 'active')
+  }
+  // Members 0..4 also cross-assigned to Dr. Salma (dual assignment)
+  for (let i = 0; i < 5; i++) {
+    insertCareTeam(orgMemberIds[i], salmaOrgUserId, 'active')
+  }
+
+  // 6. Sample Plans for Org Members
+  const orgPlan1Id = insertPlan(
+    orgMemberIds[0],
+    'move',
+    tarekOrgUserId,
+    'Apex Athletic Performance - Phase 1',
+    'Customized club strength & conditioning program developed by Coach Tarek Vance.'
+  )
+  insertPlanItem(orgPlan1Id, {
+    dayOfWeek: 1,
+    position: 0,
+    timeOfDay: '17:00',
+    title: 'Trap Bar Deadlift',
+    instructions: 'Explosive drive from heels, keep neutral spine.',
+    sets: 4, reps: '6-8', tempo: '3-1-1', restSec: 90, ptCleared: 1,
+  })
+  insertPlanItem(orgPlan1Id, {
+    dayOfWeek: 1,
+    position: 1,
+    timeOfDay: '17:25',
+    title: 'Dumbbell Incline Bench Press',
+    instructions: 'Controlled eccentric, squeeze chest at top.',
+    sets: 3, reps: '10', tempo: '2-0-1', restSec: 60, ptCleared: 1,
+  })
+
+  const orgPlan2Id = insertPlan(
+    orgMemberIds[10],
+    'recover',
+    salmaOrgUserId,
+    'Apex Spine & Hip Mobility Protocol',
+    'Designed by Dr. Salma Rehab to relieve desk fatigue and restore thoracic extension.'
+  )
+  insertPlanItem(orgPlan2Id, {
+    dayOfWeek: 2,
+    position: 0,
+    timeOfDay: '08:00',
+    title: 'Cat-Cow & Thoracic Rotation',
+    instructions: 'Slow breathing, hold end range for 2 seconds.',
+    sets: 3, reps: '10 per side', tempo: 'Controlled', restSec: 45, ptCleared: 1,
+  })
+
+  // 7. Demo Individual B2C Member
+  const b2cUserId = insertUser({
+    name: 'Ziad Individual',
+    email: 'individual@demo.com',
+    role: 'client',
+    organizationId: null,
+  })
+  insertClientProfile(b2cUserId, {
+    goal: 'recover_injury',
+    days_per_week: 4,
+    age: 28,
+    height_cm: 178,
+    weight_kg: 76,
+    activity_level: 'light',
+    diet_style: 'no_preference',
+    phone: '01099887766',
+    plan_start_date: dateStr(-7),
+    program_weeks: 8,
+    onboarding_completed: 1,
+  })
+  insertSub.run(
+    b2cUserId,
+    'Starter',
+    399,
+    'card',
+    'active',
+    'self',
+    'SUB-B2C-7712',
+    dateStr(-7) + 'T12:00:00Z'
+  )
+  insertCareTeam(b2cUserId, monaId, 'active')
+  const b2cPlanId = insertPlan(
+    b2cUserId,
+    'recover',
+    monaId,
+    'Knee Return-to-Sport Plan',
+    'Individual rehab protocol designed by Dr. Mona Fathy.'
+  )
+  insertPlanItem(b2cPlanId, {
+    dayOfWeek: 1,
+    position: 0,
+    timeOfDay: '09:00',
+    title: 'Terminal Knee Extension (Band)',
+    instructions: 'Squeeze quad at lockout, pause for 2 counts.',
+    sets: 3, reps: '15', tempo: '2-2-1', restSec: 45, ptCleared: 1,
+  })
+
   console.log('Seed complete.')
-  console.log(`  sara@demo.com   — client (full data, week 3 of 8)`)
-  console.log(`  omar@demo.com   — client (onboarding not completed)`)
-  console.log(`  karim@demo.com  — trainer, approved`)
-  console.log(`  hana@demo.com   — nutritionist, approved`)
-  console.log(`  mona@demo.com   — physical therapist, approved`)
-  console.log(`  nour@demo.com   — trainer, approved`)
-  console.log(`  nada@demo.com   — nutritionist, approved`)
-  console.log(`  youssef@demo.com— physical therapist, approved`)
-  console.log(`  yasmin@demo.com — physical therapist, PENDING`)
-  console.log(`  admin@demo.com  — admin`)
-  console.log(`  finance@demo.com— finance officer`)
-  console.log(`  All passwords:  demo1234`)
+  console.log(`  sara@demo.com       — client (individual, week 3 of 8)`)
+  console.log(`  individual@demo.com — client (individual B2C demo)`)
+  console.log(`  omar@demo.com       — client (onboarding not completed)`)
+  console.log(`  karim@demo.com      — platform trainer (Move), approved`)
+  console.log(`  hana@demo.com       — platform nutritionist (Eat), approved`)
+  console.log(`  mona@demo.com       — platform physical therapist (Recover), approved`)
+  console.log(`  nour@demo.com       — platform trainer, approved`)
+  console.log(`  nada@demo.com       — platform nutritionist, approved`)
+  console.log(`  youssef@demo.com    — platform physical therapist, approved`)
+  console.log(`  yasmin@demo.com     — physical therapist, PENDING`)
+  console.log(`  admin@demo.com      — platform admin`)
+  console.log(`  finance@demo.com    — platform finance officer`)
+  console.log(`  -- B2B Organization (Apex Athletic Club, code: APEX2026, limit: 30) --`)
+  console.log(`  admin@apex.com      — org admin (Apex Athletic Club)`)
+  console.log(`  tarek.org@apex.com  — org trainer (Move)`)
+  console.log(`  salma.org@apex.com  — org physical therapist (Recover)`)
+  console.log(`  member1@apex.com..20— org members (sponsored, assigned)`)
+  console.log(`  All passwords:        demo1234`)
 })
 
 seedAll()

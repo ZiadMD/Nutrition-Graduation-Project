@@ -9,6 +9,19 @@
 PRAGMA foreign_keys = ON;
 
 -- ---------------------------------------------------------------------
+-- Organizations (B2B)
+-- ---------------------------------------------------------------------
+CREATE TABLE organizations (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT    NOT NULL,
+  type        TEXT    NOT NULL CHECK (type IN ('company', 'university', 'gym', 'other')),
+  logo_url    TEXT,
+  invite_code TEXT    NOT NULL UNIQUE,
+  seat_limit  INTEGER NOT NULL CHECK (seat_limit >= 1),
+  created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);
+
+-- ---------------------------------------------------------------------
 -- Users and roles
 -- ---------------------------------------------------------------------
 CREATE TABLE users (
@@ -16,7 +29,8 @@ CREATE TABLE users (
   name            TEXT    NOT NULL,
   email           TEXT    NOT NULL UNIQUE COLLATE NOCASE,
   password_hash   TEXT    NOT NULL,
-  role            TEXT    NOT NULL CHECK (role IN ('client', 'specialist', 'admin', 'finance')),
+  role            TEXT    NOT NULL CHECK (role IN ('client', 'specialist', 'admin', 'org_admin', 'finance')),
+  organization_id INTEGER REFERENCES organizations(id) ON DELETE SET NULL,
   status          TEXT    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended')),
   last_active_at  TEXT,                 -- updated on every authenticated request
   created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
@@ -60,6 +74,7 @@ CREATE TABLE injuries (
 -- ---------------------------------------------------------------------
 CREATE TABLE specialists (
   user_id            INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  organization_id    INTEGER REFERENCES organizations(id) ON DELETE SET NULL,
   type               TEXT NOT NULL CHECK (type IN ('trainer', 'nutritionist', 'physical_therapist')),
   credentials        TEXT NOT NULL,          -- e.g. 'Licensed physical therapist, MSc Sports Rehab'
   bio                TEXT,
@@ -96,11 +111,13 @@ CREATE TABLE availability_slots (
   UNIQUE (specialist_id, starts_at)
 );
 
--- Which specialists work with which client (created on first booking or by the seed)
+-- Which specialists work with which client (assignments linking a member to a specialist)
 CREATE TABLE care_team (
   client_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   specialist_id INTEGER NOT NULL REFERENCES specialists(user_id) ON DELETE CASCADE,
-  created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  status        TEXT    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'ended')),
+  created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  ended_at      TEXT,
   PRIMARY KEY (client_id, specialist_id)
 );
 
@@ -219,15 +236,16 @@ CREATE TABLE ai_plan_requests (
   created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
--- Mock checkout: records a "paid" subscription. No real payment is processed.
+-- Mock checkout: records a "paid" or "sponsored" subscription. No real payment is processed.
 CREATE TABLE subscriptions (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   client_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  plan_name  TEXT NOT NULL,                  -- 'Starter' | 'Plus' | 'Full Team'
+  plan_name  TEXT NOT NULL,                  -- 'Starter' | 'Plus' | 'Full Team' | 'Sponsored'
   price_egp  INTEGER NOT NULL,
   method     TEXT NOT NULL CHECK (method IN ('card', 'fawry', 'vodafone_cash', 'instapay')),
   status     TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'cancelled')),
-  reference  TEXT NOT NULL,                  -- fake reference like 'DEMO-8F2K41'
+  source     TEXT NOT NULL DEFAULT 'self' CHECK (source IN ('self', 'organization')),
+  reference  TEXT NOT NULL,                  -- fake reference like 'DEMO-8F2K41' or 'ORG-APEX2026-...'
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
@@ -313,4 +331,8 @@ CREATE INDEX idx_tickets_reporter         ON support_tickets (reporter_id, statu
 CREATE INDEX idx_tickets_status           ON support_tickets (status, priority);
 CREATE INDEX idx_tickets_category         ON support_tickets (category);
 CREATE INDEX idx_messages_ticket          ON ticket_messages (ticket_id, created_at);
+CREATE INDEX idx_care_team_active         ON care_team (client_id, specialist_id) WHERE status = 'active';
+CREATE INDEX idx_care_team_specialist     ON care_team (specialist_id, status);
+CREATE INDEX idx_users_org                ON users (organization_id);
+CREATE INDEX idx_specialists_org          ON specialists (organization_id);
 

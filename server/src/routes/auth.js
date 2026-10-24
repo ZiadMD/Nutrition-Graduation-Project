@@ -57,7 +57,90 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required.'),
 })
 
-// ── Helper to build clean user response ─────────────────────────────────────
+const registerOrgSchema = z.object({
+  // Organization name can come as organizationName, orgName, or name (if adminName is present)
+  organizationName: z.string().trim().min(1).optional(),
+  orgName: z.string().trim().min(1).optional(),
+  // Admin name can come as adminName or name
+  adminName: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1).optional(),
+  // Email can come as email or adminEmail
+  email: z.string().trim().email('Valid email address required.').optional(),
+  adminEmail: z.string().trim().email('Valid email address required.').optional(),
+  // Password can come as password or adminPassword
+  password: z.string().min(8, 'Password must be at least 8 characters long.').optional(),
+  adminPassword: z.string().min(8, 'Password must be at least 8 characters long.').optional(),
+  type: z.enum(['company', 'university', 'gym', 'other']),
+  seatLimit: z.coerce.number().int().min(1, 'Seat limit must be at least 1.').max(500, 'Seat limit cannot exceed 500.'),
+}).refine((d) => Boolean(d.organizationName || d.orgName || (d.adminName ? d.name : undefined)), {
+  message: 'Organization name is required.',
+  path: ['organizationName'],
+}).refine((d) => Boolean(d.adminName || (d.organizationName || d.orgName ? d.name : undefined)), {
+  message: 'Admin name is required.',
+  path: ['adminName'],
+}).refine((d) => Boolean(d.email || d.adminEmail), {
+  message: 'Admin email is required.',
+  path: ['email'],
+}).refine((d) => Boolean(d.password || d.adminPassword), {
+  message: 'Admin password is required.',
+  path: ['password'],
+})
+
+const joinSchema = z.object({
+  inviteCode: z.string().trim().min(1, 'Invite code is required.'),
+  name: z.string().trim().min(1, 'Name is required.'),
+  email: z.string().trim().email('Valid email address required.'),
+  password: z.string().min(8, 'Password must be at least 8 characters long.'),
+})
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+// 8-character invite code (uppercase letters and digits, excluding 0, O, 1, I)
+function generateInviteCode() {
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+  let code = ''
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return code
+}
+
+function buildOrganizationPayload(orgId, role) {
+  if (!orgId) return null
+  const org = db.prepare('SELECT id, name, type, logo_url, invite_code, seat_limit FROM organizations WHERE id = ?').get(orgId)
+  if (!org) return null
+
+  if (role === 'org_admin') {
+    const seatsUsedRow = db.prepare("SELECT COUNT(*) AS count FROM users WHERE organization_id = ? AND role = 'client'").get(org.id)
+    return {
+      id: org.id,
+      name: org.name,
+      type: org.type,
+      logoUrl: org.logo_url || null,
+      inviteCode: org.invite_code,
+      seatLimit: org.seat_limit,
+      seatsUsed: seatsUsedRow?.count ?? 0,
+    }
+  }
+
+  if (role === 'client') {
+    return {
+      id: org.id,
+      name: org.name,
+      type: org.type,
+      logoUrl: org.logo_url || null,
+      sponsored: true,
+    }
+  }
+
+  // Org specialists or other org accounts
+  return {
+    id: org.id,
+    name: org.name,
+    type: org.type,
+    logoUrl: org.logo_url || null,
+  }
+}
 
 function buildUserPayload(user) {
   const result = {
@@ -65,6 +148,8 @@ function buildUserPayload(user) {
     name: user.name,
     email: user.email,
     role: user.role,
+    organizationId: user.organization_id || null,
+    organization: buildOrganizationPayload(user.organization_id, user.role),
     createdAt: user.created_at,
     lastActiveAt: user.last_active_at,
   }
@@ -148,7 +233,8 @@ router.post('/register', validate(registerSchema), (req, res) => {
   }
 
   // Validate specialist-specific requirements
-  if (role === 'specialist') {
+  const safeRole = role === 'specialist' ? 'specialist' : 'client'
+  if (safeRole === 'specialist') {
     const fields = {}
     if (!type) fields.type = 'Specialist type is required (trainer, nutritionist, physical_therapist).'
     if (!credentials) fields.credentials = 'Credentials or qualifications are required for specialist registration.'
@@ -165,13 +251,13 @@ router.post('/register', validate(registerSchema), (req, res) => {
   // Insert user and corresponding profile/specialist row in a single transaction
   const createUserTransaction = db.transaction(() => {
     const userResult = db
-      .prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
-      .run(name, email, passwordHash, role)
+      .prepare('INSERT INTO users (name, email, password_hash, role, organization_id) VALUES (?, ?, ?, ?, NULL)')
+      .run(name, email, passwordHash, safeRole)
     const userId = Number(userResult.lastInsertRowid)
 
-    if (role === 'client') {
+    if (safeRole === 'client') {
       db.prepare('INSERT INTO client_profiles (user_id) VALUES (?)').run(userId)
-    } else if (role === 'specialist') {
+    } else if (safeRole === 'specialist') {
       const normalizedFocusTags = Array.isArray(focusTags)
         ? focusTags.join(',')
         : (focusTags || null)
@@ -224,6 +310,7 @@ router.post('/register', validate(registerSchema), (req, res) => {
     data: {
       token,
       user: userPayload,
+      organization: userPayload.organization,
     },
   })
 })
@@ -260,6 +347,156 @@ router.post('/login', validate(loginSchema), (req, res) => {
     data: {
       token,
       user: userPayload,
+      organization: userPayload.organization,
+    },
+  })
+})
+
+/**
+ * POST /api/auth/register-org
+ * Creates organization and org_admin in one transaction.
+ * Generates unique 8-character invite code (no look-alike characters).
+ * org_admin does not use a seat and does not get a client_profile.
+ */
+router.post('/register-org', validate(registerOrgSchema), (req, res) => {
+  const orgName = req.body.organizationName || req.body.orgName || (req.body.adminName ? req.body.name : '')
+  const adminName = req.body.adminName || (req.body.organizationName || req.body.orgName ? req.body.name : '')
+  const email = req.body.email || req.body.adminEmail
+  const password = req.body.password || req.body.adminPassword
+  const { type, seatLimit } = req.body
+
+  const existing = db.prepare('SELECT id FROM users WHERE email = ? COLLATE NOCASE').get(email)
+  if (existing) {
+    return res.status(409).json({
+      error: {
+        code: 'EMAIL_IN_USE',
+        message: 'An account with this email already exists.',
+        fields: { email: 'Already in use' },
+      },
+    })
+  }
+
+  const passwordHash = bcrypt.hashSync(password, 10)
+
+  const registerOrgTx = db.transaction(() => {
+    let inviteCode = generateInviteCode()
+    let attempts = 0
+    while (db.prepare('SELECT id FROM organizations WHERE invite_code = ?').get(inviteCode)) {
+      inviteCode = generateInviteCode()
+      attempts++
+      if (attempts > 20) throw new Error('Could not generate unique invite code.')
+    }
+
+    const orgRes = db
+      .prepare('INSERT INTO organizations (name, type, invite_code, seat_limit) VALUES (?, ?, ?, ?)')
+      .run(orgName, type, inviteCode, seatLimit)
+    const orgId = Number(orgRes.lastInsertRowid)
+
+    const userRes = db
+      .prepare('INSERT INTO users (name, email, password_hash, role, organization_id) VALUES (?, ?, ?, ?, ?)')
+      .run(adminName, email, passwordHash, 'org_admin', orgId)
+    const userId = Number(userRes.lastInsertRowid)
+
+    return db.prepare('SELECT * FROM users WHERE id = ?').get(userId)
+  })
+
+  const newUser = registerOrgTx()
+  const token = signToken(newUser.id, newUser.role)
+  const userPayload = buildUserPayload(newUser)
+
+  res.status(201).json({
+    data: {
+      token,
+      user: userPayload,
+      organization: userPayload.organization,
+    },
+  })
+})
+
+/**
+ * POST /api/auth/join
+ * Registers member using an organization invite code.
+ * Re-counts seats, rejects if full. Creates user as role 'client' with organization_id,
+ * inserts client_profiles row, and creates sponsored subscription.
+ */
+router.post('/join', validate(joinSchema), (req, res) => {
+  const { name, email, password, inviteCode } = req.body
+  const code = String(inviteCode || '').trim().toUpperCase()
+
+  const org = db
+    .prepare('SELECT id, name, type, logo_url, invite_code, seat_limit FROM organizations WHERE UPPER(invite_code) = ?')
+    .get(code)
+
+  if (!org) {
+    return res.status(404).json({
+      error: { code: 'ORGANIZATION_NOT_FOUND', message: 'Invalid organization invite code.' },
+    })
+  }
+
+  const existing = db.prepare('SELECT id FROM users WHERE email = ? COLLATE NOCASE').get(email)
+  if (existing) {
+    return res.status(409).json({
+      error: {
+        code: 'EMAIL_IN_USE',
+        message: 'An account with this email already exists.',
+        fields: { email: 'Already in use' },
+      },
+    })
+  }
+
+  const passwordHash = bcrypt.hashSync(password, 10)
+
+  const joinTx = db.transaction(() => {
+    // Re-count seats inside transaction (only role 'client' uses seats)
+    const seatsUsedRow = db
+      .prepare("SELECT COUNT(*) AS count FROM users WHERE organization_id = ? AND role = 'client'")
+      .get(org.id)
+    const seatsUsed = seatsUsedRow?.count ?? 0
+
+    if (seatsUsed >= org.seat_limit) {
+      const err = new Error('No seats left in this organization.')
+      err.code = 'SEATS_FULL'
+      throw err
+    }
+
+    const userRes = db
+      .prepare('INSERT INTO users (name, email, password_hash, role, organization_id) VALUES (?, ?, ?, ?, ?)')
+      .run(name, email, passwordHash, 'client', org.id)
+    const userId = Number(userRes.lastInsertRowid)
+
+    // Create client_profiles row (member still goes through normal onboarding afterwards)
+    db.prepare('INSERT INTO client_profiles (user_id) VALUES (?)').run(userId)
+
+    // Insert sponsored subscription (price_egp = 0, source = 'organization')
+    const ref = `ORG-${org.invite_code}-${userId}`
+    db.prepare(`
+      INSERT INTO subscriptions (client_id, plan_name, price_egp, method, status, source, reference)
+      VALUES (?, 'Organization sponsored', 0, 'card', 'active', 'organization', ?)
+    `).run(userId, ref)
+
+    return db.prepare('SELECT * FROM users WHERE id = ?').get(userId)
+  })
+
+  let newUser
+  try {
+    newUser = joinTx()
+  } catch (err) {
+    if (err.code === 'SEATS_FULL' || err.code === 'ORGANIZATION_SEATS_FULL') {
+      return res.status(409).json({
+        error: { code: 'SEATS_FULL', message: err.message },
+      })
+    }
+    throw err
+  }
+
+  const token = signToken(newUser.id, newUser.role)
+  const userPayload = buildUserPayload(newUser)
+
+  res.status(201).json({
+    data: {
+      token,
+      user: userPayload,
+      organization: userPayload.organization,
     },
   })
 })
@@ -269,7 +506,7 @@ router.post('/login', validate(loginSchema), (req, res) => {
  * Returns the currently authenticated user with role-specific profile details.
  */
 router.get('/me', requireAuth, (req, res) => {
-  const user = db.prepare('SELECT id, name, email, role, status, last_active_at, created_at FROM users WHERE id = ?').get(req.user.id)
+  const user = db.prepare('SELECT id, name, email, role, status, organization_id, last_active_at, created_at FROM users WHERE id = ?').get(req.user.id)
 
   if (!user) {
     return res.status(404).json({
@@ -282,6 +519,7 @@ router.get('/me', requireAuth, (req, res) => {
   res.json({
     data: {
       user: userPayload,
+      organization: userPayload.organization,
     },
   })
 })

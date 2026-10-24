@@ -21,18 +21,19 @@ router.use(requireAuth, requireRole('finance', 'admin'))
  * High-level financial KPIs, weekly trend line, revenue streams, and recent transactions.
  */
 router.get('/overview', (_req, res) => {
-  // 1. Subscriptions metrics
+  // 1. Subscriptions metrics (paid/self only, exclude sponsored)
   const subStats = db.prepare(`
     SELECT 
       COUNT(*) AS activeCount,
       COALESCE(SUM(price_egp), 0) AS mrr
     FROM subscriptions
-    WHERE status = 'active'
+    WHERE status = 'active' AND (source = 'self' OR source IS NULL)
   `).get()
 
   const allSubRevenue = db.prepare(`
     SELECT COALESCE(SUM(price_egp), 0) AS total
     FROM subscriptions
+    WHERE (source = 'self' OR source IS NULL)
   `).get()?.total ?? 0
 
   // 2. Bookings session revenue
@@ -64,6 +65,7 @@ router.get('/overview', (_req, res) => {
   const payingClientsCount = db.prepare(`
     SELECT COUNT(DISTINCT client_id) AS count
     FROM subscriptions
+    WHERE (source = 'self' OR source IS NULL)
   `).get()?.count ?? 1
 
   const arpu = payingClientsCount > 0 ? Math.round(grossRevenue / payingClientsCount) : 0
@@ -76,6 +78,7 @@ router.get('/overview', (_req, res) => {
   const methodRows = db.prepare(`
     SELECT method, COUNT(*) AS count, SUM(price_egp) AS total
     FROM subscriptions
+    WHERE (source = 'self' OR source IS NULL)
     GROUP BY method
   `).all()
 
@@ -127,6 +130,7 @@ router.get('/overview', (_req, res) => {
       u.email AS customer_email
     FROM subscriptions s
     JOIN users u ON u.id = s.client_id
+    WHERE (s.source = 'self' OR s.source IS NULL)
     ORDER BY s.created_at DESC
     LIMIT 5
   `).all()
@@ -203,6 +207,7 @@ router.get('/transactions', (req, res) => {
       u.email AS customer_email
     FROM subscriptions s
     JOIN users u ON u.id = s.client_id
+    WHERE (s.source = 'self' OR s.source IS NULL)
     ORDER BY s.created_at DESC
   `).all()
 
@@ -272,7 +277,7 @@ router.get('/payouts', (_req, res) => {
       u.email
     FROM specialists s
     JOIN users u ON u.id = s.user_id
-    WHERE s.approval_status = 'approved'
+    WHERE s.approval_status = 'approved' AND s.organization_id IS NULL
     ORDER BY u.name ASC
   `).all()
 
@@ -424,6 +429,7 @@ router.get('/subscriptions', (_req, res) => {
       u.email AS client_email
     FROM subscriptions s
     JOIN users u ON u.id = s.client_id
+    WHERE (s.source = 'self' OR s.source IS NULL)
     ORDER BY s.created_at DESC
   `).all()
 

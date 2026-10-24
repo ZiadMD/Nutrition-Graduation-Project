@@ -93,7 +93,7 @@ router.get('/clients', (req, res) => {
       FROM care_team ct
       JOIN users u ON u.id = ct.client_id
       LEFT JOIN client_profiles cp ON cp.user_id = u.id
-      WHERE ct.specialist_id = ?
+      WHERE ct.specialist_id = ? AND ct.status = 'active'
       ORDER BY u.name ASC`
     )
     .all(specialistId)
@@ -211,7 +211,7 @@ router.get('/clients/:clientId', (req, res) => {
 
   // Enforce care team membership
   const care = db
-    .prepare(`SELECT 1 FROM care_team WHERE client_id = ? AND specialist_id = ?`)
+    .prepare(`SELECT 1 FROM care_team WHERE client_id = ? AND specialist_id = ? AND status = 'active'`)
     .get(clientId, specialistId)
 
   if (!care) {
@@ -245,7 +245,7 @@ router.get('/clients/:clientId', (req, res) => {
        FROM care_team ct
        JOIN users u ON u.id = ct.specialist_id
        JOIN specialists sp ON sp.user_id = u.id
-       WHERE ct.client_id = ?`
+       WHERE ct.client_id = ? AND ct.status = 'active'`
     )
     .all(clientId)
 
@@ -406,7 +406,7 @@ router.put('/clients/:clientId/plans/:service', validate(putPlanSchema), (req, r
 
   // 1. Care team check
   const care = db
-    .prepare(`SELECT 1 FROM care_team WHERE client_id = ? AND specialist_id = ?`)
+    .prepare(`SELECT 1 FROM care_team WHERE client_id = ? AND specialist_id = ? AND status = 'active'`)
     .get(clientId, specialistId)
 
   if (!care) {
@@ -572,7 +572,7 @@ router.post('/clients/:clientId/notes', validate(noteSchema), (req, res) => {
   }
 
   const care = db
-    .prepare(`SELECT 1 FROM care_team WHERE client_id = ? AND specialist_id = ?`)
+    .prepare(`SELECT 1 FROM care_team WHERE client_id = ? AND specialist_id = ? AND status = 'active'`)
     .get(clientId, specialistId)
 
   if (!care) {

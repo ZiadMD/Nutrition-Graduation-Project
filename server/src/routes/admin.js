@@ -231,6 +231,12 @@ router.patch('/users/:id/role', validate(updateUserRoleSchema), (req, res) => {
   const userId = Number(req.params.id)
   const { role } = req.body
 
+  if (role === 'org_admin') {
+    return res.status(403).json({
+      error: { code: 'FORBIDDEN', message: 'The org_admin role cannot be assigned by platform admin.' },
+    })
+  }
+
   const existing = db.prepare(`SELECT id, name, email, role, status FROM users WHERE id = ?`).get(userId)
   if (!existing) {
     return res.status(404).json({
@@ -269,6 +275,12 @@ const createUserSchema = z.object({
  */
 router.post('/users', validate(createUserSchema), (req, res) => {
   const { name, email, password, role } = req.body
+
+  if (role === 'org_admin') {
+    return res.status(403).json({
+      error: { code: 'FORBIDDEN', message: 'The org_admin role cannot be created by platform admin.' },
+    })
+  }
 
   const existing = db.prepare('SELECT id FROM users WHERE email = ? COLLATE NOCASE').get(email)
   if (existing) {
@@ -343,11 +355,12 @@ router.get('/specialists', (req, res) => {
       u.created_at AS applied_at
     FROM specialists s
     JOIN users u ON u.id = s.user_id
+    WHERE s.organization_id IS NULL
   `
   const params = []
 
   if (status && status !== 'all') {
-    query += ` WHERE s.approval_status = ?`
+    query += ` AND s.approval_status = ?`
     params.push(status)
   }
 

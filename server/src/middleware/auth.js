@@ -28,7 +28,7 @@ export function requireAuth(req, res, next) {
     const payload = jwt.verify(token, process.env.JWT_SECRET)
 
     // Check if the user exists and is not suspended
-    const user = db.prepare('SELECT id, name, email, role, status FROM users WHERE id = ?').get(payload.sub)
+    const user = db.prepare('SELECT id, name, email, role, status, organization_id FROM users WHERE id = ?').get(payload.sub)
     if (!user) {
       return res.status(401).json({
         error: { code: 'USER_NOT_FOUND', message: 'User no longer exists.' },
@@ -43,7 +43,13 @@ export function requireAuth(req, res, next) {
 
     // Attach a clean user object so downstream handlers don't need to know the
     // JWT internals. sub is the standard JWT "subject" claim (the user's id).
-    req.user = { id: user.id, name: user.name, email: user.email, role: user.role }
+    req.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      organizationId: user.organization_id || null,
+    }
 
     // Update last_active_at timestamp (best effort)
     try {
@@ -71,9 +77,15 @@ export function optionalAuth(req, res, next) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET)
-    const user = db.prepare('SELECT id, name, email, role, status FROM users WHERE id = ?').get(payload.sub)
+    const user = db.prepare('SELECT id, name, email, role, status, organization_id FROM users WHERE id = ?').get(payload.sub)
     if (user && user.status !== 'suspended') {
-      req.user = { id: user.id, name: user.name, email: user.email, role: user.role }
+      req.user = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        organizationId: user.organization_id || null,
+      }
     } else {
       req.user = null
     }
@@ -82,3 +94,6 @@ export function optionalAuth(req, res, next) {
   }
   next()
 }
+
+export { requireOrgAdmin } from './requireOrgAdmin.js'
+

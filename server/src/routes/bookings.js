@@ -131,14 +131,44 @@ router.post('/', requireAuth, requireRole('client'), validate(createBookingSchem
       }
 
       // 2. Fetch and validate approved specialist
+      const clientUser = db.prepare('SELECT organization_id FROM users WHERE id = ?').get(clientId)
       const specialist = db
-        .prepare("SELECT user_id, rate_egp, approval_status FROM specialists WHERE user_id = ? AND approval_status = 'approved'")
+        .prepare("SELECT user_id, organization_id, rate_egp, approval_status FROM specialists WHERE user_id = ? AND approval_status = 'approved'")
         .get(resolvedSpecialistId)
       if (!specialist) {
         const err = new Error('Specialist is not available for booking.')
         err.status = 400
         err.code = 'SPECIALIST_UNAVAILABLE'
         throw err
+      }
+
+      // Visibility guard: org member can only book specialists of their own org;
+      // individual can only book platform specialists (organization_id IS NULL)
+      if (clientUser?.organization_id) {
+        if (specialist.organization_id !== clientUser.organization_id) {
+          const err = new Error('You may only book specialists belonging to your organization.')
+          err.status = 403
+          err.code = 'FORBIDDEN'
+          throw err
+        }
+
+        // For org members, require an existing ACTIVE care_team row before booking
+        const activeAssignment = db
+          .prepare("SELECT 1 FROM care_team WHERE client_id = ? AND specialist_id = ? AND status = 'active'")
+          .get(clientId, resolvedSpecialistId)
+        if (!activeAssignment) {
+          const err = new Error('You must have an active assignment with this specialist before booking.')
+          err.status = 403
+          err.code = 'FORBIDDEN'
+          throw err
+        }
+      } else {
+        if (specialist.organization_id !== null && specialist.organization_id !== undefined) {
+          const err = new Error('Individual members may only book platform specialists.')
+          err.status = 403
+          err.code = 'FORBIDDEN'
+          throw err
+        }
       }
 
       // 3. Compute price server-side
@@ -176,8 +206,13 @@ router.post('/', requireAuth, requireRole('client'), validate(createBookingSchem
 
       const newBookingId = Number(insertBooking.lastInsertRowid)
 
-      // 6. Ensure care team connection
-      db.prepare('INSERT OR IGNORE INTO care_team (client_id, specialist_id) VALUES (?, ?)').run(clientId, resolvedSpecialistId)
+      // 6. Ensure care team connection (for individual members only; org members require pre-assigned care team)
+      if (!clientUser?.organization_id) {
+        db.prepare(`
+          INSERT INTO care_team (client_id, specialist_id, status) VALUES (?, ?, 'active')
+          ON CONFLICT(client_id, specialist_id) DO UPDATE SET status = 'active', ended_at = NULL
+        `).run(clientId, resolvedSpecialistId)
+      }
 
       return newBookingId
     })
